@@ -6,7 +6,7 @@ enum SpreadConfig {
 
     /// Production API. Point this at the deployed Vercel app.
     /// Override at runtime (Settings tab in the host app) via "api_base_url".
-    static let defaultBaseURL = URL(string: "https://the-spread-imessage.vercel.app")!
+    static let defaultBaseURL = URL(string: "https://thespread-imessage.vercel.app")!
 
     static var groupDefaults: UserDefaults {
         UserDefaults(suiteName: appGroupID) ?? .standard
