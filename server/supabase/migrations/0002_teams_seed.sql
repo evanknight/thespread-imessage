@@ -1,0 +1,37 @@
+-- All 32 teams with both external spellings.
+-- Everything from ESPN or The Odds API resolves through this table;
+-- unmapped names are a hard error, never a silent insert.
+insert into teams (canonical_abbr, full_name, espn_abbr, odds_api_name) values
+  ('ARI', 'Arizona Cardinals',     'ARI', 'Arizona Cardinals'),
+  ('ATL', 'Atlanta Falcons',       'ATL', 'Atlanta Falcons'),
+  ('BAL', 'Baltimore Ravens',      'BAL', 'Baltimore Ravens'),
+  ('BUF', 'Buffalo Bills',         'BUF', 'Buffalo Bills'),
+  ('CAR', 'Carolina Panthers',     'CAR', 'Carolina Panthers'),
+  ('CHI', 'Chicago Bears',         'CHI', 'Chicago Bears'),
+  ('CIN', 'Cincinnati Bengals',    'CIN', 'Cincinnati Bengals'),
+  ('CLE', 'Cleveland Browns',      'CLE', 'Cleveland Browns'),
+  ('DAL', 'Dallas Cowboys',        'DAL', 'Dallas Cowboys'),
+  ('DEN', 'Denver Broncos',        'DEN', 'Denver Broncos'),
+  ('DET', 'Detroit Lions',         'DET', 'Detroit Lions'),
+  ('GB',  'Green Bay Packers',     'GB',  'Green Bay Packers'),
+  ('HOU', 'Houston Texans',        'HOU', 'Houston Texans'),
+  ('IND', 'Indianapolis Colts',    'IND', 'Indianapolis Colts'),
+  ('JAX', 'Jacksonville Jaguars',  'JAX', 'Jacksonville Jaguars'),
+  ('KC',  'Kansas City Chiefs',    'KC',  'Kansas City Chiefs'),
+  ('LAC', 'Los Angeles Chargers',  'LAC', 'Los Angeles Chargers'),
+  ('LAR', 'Los Angeles Rams',      'LAR', 'Los Angeles Rams'),
+  ('LV',  'Las Vegas Raiders',     'LV',  'Las Vegas Raiders'),
+  ('MIA', 'Miami Dolphins',        'MIA', 'Miami Dolphins'),
+  ('MIN', 'Minnesota Vikings',     'MIN', 'Minnesota Vikings'),
+  ('NE',  'New England Patriots',  'NE',  'New England Patriots'),
+  ('NO',  'New Orleans Saints',    'NO',  'New Orleans Saints'),
+  ('NYG', 'New York Giants',       'NYG', 'New York Giants'),
+  ('NYJ', 'New York Jets',         'NYJ', 'New York Jets'),
+  ('PHI', 'Philadelphia Eagles',   'PHI', 'Philadelphia Eagles'),
+  ('PIT', 'Pittsburgh Steelers',   'PIT', 'Pittsburgh Steelers'),
+  ('SEA', 'Seattle Seahawks',      'SEA', 'Seattle Seahawks'),
+  ('SF',  'San Francisco 49ers',   'SF',  'San Francisco 49ers'),
+  ('TB',  'Tampa Bay Buccaneers',  'TB',  'Tampa Bay Buccaneers'),
+  ('TEN', 'Tennessee Titans',      'TEN', 'Tennessee Titans'),
+  ('WAS', 'Washington Commanders', 'WSH', 'Washington Commanders')
+on conflict (canonical_abbr) do nothing;

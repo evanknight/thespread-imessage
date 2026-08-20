@@ -1,0 +1,18 @@
+# node / next
+node_modules/
+.next/
+*.tsbuildinfo
+next-env.d.ts
+
+# secrets — never commit env files
+.env
+.env.local
+.env*.local
+
+# xcode
+xcuserdata/
+DerivedData/
+*.xcresult
+
+# os
+.DS_Store
