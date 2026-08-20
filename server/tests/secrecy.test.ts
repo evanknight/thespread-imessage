@@ -39,7 +39,7 @@ describe('pick secrecy', () => {
     expect(bob.pick.team_abbr).toBe('KC');
   });
 
-  it('enrollment exchanges a code for a token and rotates on reuse', async () => {
+  it('enrollment exchanges a code for a token; re-enroll keeps both sessions alive', async () => {
     const { POST } = await import('@/app/api/enroll/route');
     const res1 = await POST(apiReq('/api/enroll', { method: 'POST', body: { code: 'code-erin' } }));
     expect(res1.status).toBe(200);
@@ -47,14 +47,21 @@ describe('pick secrecy', () => {
     expect(body1.display_name).toBe('Erin');
     expect(body1.token).toHaveLength(64);
 
-    // Re-enroll: new token works, old token dies.
+    // Re-enroll: BOTH tokens stay valid (web + phone coexist).
     const res2 = await POST(apiReq('/api/enroll', { method: 'POST', body: { code: 'code-erin' } }));
     const body2 = await res2.json();
     const { GET } = await import('@/app/api/week/current/route');
     const oldTok = await GET(apiReq('/api/week/current', { headers: { authorization: `Bearer ${body1.token}` }, now: T.tuesday }));
-    expect(oldTok.status).toBe(401);
+    expect(oldTok.status).toBe(200);
     const newTok = await GET(apiReq('/api/week/current', { headers: { authorization: `Bearer ${body2.token}` }, now: T.tuesday }));
     expect(newTok.status).toBe(200);
+
+    // Only the newest 5 tokens survive: mint 5 more, then the FIRST one is dead.
+    for (let i = 0; i < 5; i++) {
+      await POST(apiReq('/api/enroll', { method: 'POST', body: { code: 'code-erin' } }));
+    }
+    const expired = await GET(apiReq('/api/week/current', { headers: { authorization: `Bearer ${body1.token}` }, now: T.tuesday }));
+    expect(expired.status).toBe(401);
 
     const bad = await POST(apiReq('/api/enroll', { method: 'POST', body: { code: 'nope' } }));
     expect(bad.status).toBe(404);

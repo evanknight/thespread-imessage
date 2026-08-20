@@ -83,7 +83,7 @@ export default async function Board() {
           </table>
         </>
       )}
-      <p style={{ color: '#484f58', fontSize: 12, marginTop: 32 }}>Picks stay hidden until the week locks. Your team only has to win.</p>
+      <p style={{ color: '#484f58', fontSize: 12, marginTop: 32 }}>Picks stay hidden until the week locks. Your team only has to win. <a href="/play" style={{ color: '#58a6ff' }}>Make your pick →</a></p>
     </main>
   );
 }

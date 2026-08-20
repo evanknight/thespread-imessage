@@ -20,7 +20,9 @@ export async function authPlayer(req: Request, db: Db): Promise<Player | null> {
   const m = h.match(/^Bearer\s+(.+)$/i);
   if (!m) return null;
   const rows = await db.query<Player>(
-    'select id, display_name from players where token_hash = $1',
+    `select p.id, p.display_name from players p
+     join player_tokens t on t.player_id = p.id
+     where t.token_hash = $1`,
     [sha256hex(m[1].trim())]
   );
   return rows[0] ?? null;

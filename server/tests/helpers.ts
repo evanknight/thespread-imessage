@@ -43,11 +43,14 @@ export async function freshDb(): Promise<TestCtx> {
   const players: Record<string, string> = {};
   for (const name of PLAYERS) {
     const rows = await db.query(
-      `insert into players (display_name, enrollment_code_hash, token_hash)
-       values ($1, $2, $3) returning id`,
-      [name, sha256hex(`code-${name.toLowerCase()}`), sha256hex(token(name))]
+      `insert into players (display_name, enrollment_code_hash)
+       values ($1, $2) returning id`,
+      [name, sha256hex(`code-${name.toLowerCase()}`)]
     );
     players[name] = rows[0].id;
+    await db.query('insert into player_tokens (player_id, token_hash) values ($1, $2)', [
+      rows[0].id, sha256hex(token(name)),
+    ]);
   }
 
   const season = await db.query(`insert into seasons (year) values (2026) returning id`);
