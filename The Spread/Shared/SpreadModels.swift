@@ -30,6 +30,7 @@ struct Game: Codable, Identifiable {
 }
 
 struct MyPick: Codable {
+    let pickId: String?
     let gameId: String
     let teamId: String
     let teamAbbr: String?
@@ -110,6 +111,11 @@ struct WeekResultRow: Codable, Identifiable {
     let lockTimeSpread: Double?
     let totalPoints: Double?
     let outcome: String?
+    let homeAbbr: String?
+    let awayAbbr: String?
+    let homeScore: Int?
+    let awayScore: Int?
+    let gameStatus: String?
     var id: String { weekId + playerId }
 }
 
@@ -155,6 +161,11 @@ enum SpreadFormat {
     /// Trims trailing ".0": 7.5 -> "7.5", 13 -> "13", -0.5 -> "-0.5".
     static func points(_ v: Double) -> String {
         v == v.rounded() ? String(Int(v)) : String(v)
+    }
+
+    /// "Los Angeles Rams" -> "RAMS". Last word works for all 32 teams.
+    static func nickname(_ fullName: String) -> String {
+        (fullName.components(separatedBy: " ").last ?? fullName).uppercased()
     }
 
     static func lockLine(_ d: Date?) -> String {

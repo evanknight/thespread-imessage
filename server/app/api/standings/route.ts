@@ -33,7 +33,7 @@ export async function GET(req: Request) {
             official_spread, lock_time_spread, total_points, outcome,
             home_abbr, away_abbr, home_score, away_score, game_status
      from weekly_results
-     where season_id = $1 and pick_id is not null
+     where season_id = $1
        and (lock_at is not null and coalesce($2::timestamptz, now()) >= lock_at)
      order by week_number desc, display_name`,
     [season[0].id, requestNow(req)]

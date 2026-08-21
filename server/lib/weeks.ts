@@ -93,6 +93,8 @@ export async function buildWeekPayload(db: Db, weekId: string, callerPlayerId: s
     `select pl.id as player_id, pl.display_name,
             (pk.id is not null) as has_picked,
             case when pl.id = $2 or (w.lock_at is not null and coalesce($3::timestamptz, now()) >= w.lock_at)
+                 then pk.id end as pick_id,
+            case when pl.id = $2 or (w.lock_at is not null and coalesce($3::timestamptz, now()) >= w.lock_at)
                  then pk.game_id end as game_id,
             case when pl.id = $2 or (w.lock_at is not null and coalesce($3::timestamptz, now()) >= w.lock_at)
                  then pk.team_id end as team_id,
@@ -131,7 +133,7 @@ export async function buildWeekPayload(db: Db, weekId: string, callerPlayerId: s
       spread_captured_at: g.spread_captured_at,
     })),
     my_pick: my?.game_id
-      ? { game_id: my.game_id, team_id: my.team_id, team_abbr: my.team_abbr, submitted_at: my.submitted_at, updated_at: my.updated_at }
+      ? { pick_id: my.pick_id, game_id: my.game_id, team_id: my.team_id, team_abbr: my.team_abbr, submitted_at: my.submitted_at, updated_at: my.updated_at }
       : null,
     submitted_count: picks.filter((p) => p.has_picked).length,
     player_count: picks.length,

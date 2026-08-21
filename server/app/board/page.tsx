@@ -20,71 +20,100 @@ export default async function Board() {
       )
     : [];
 
-  const fmt = (v: number | null) => (v == null ? '—' : v > 0 ? `+${v}` : `${v}`);
-  const cell: React.CSSProperties = { padding: '6px 10px', borderBottom: '1px solid #21262d', textAlign: 'left' };
+  const fmtSpread = (v: number | null) => (v == null ? '—' : v === 0 ? 'PK' : v > 0 ? `+${v}` : `${v}`);
+  const spreadClass = (v: number | null) => (v == null || v === 0 ? 'mut' : v > 0 ? 'pos' : 'neg');
+  const fmtKick = (iso: string) =>
+    new Date(iso).toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: '2-digit' });
+  const medals = ['🥇', '🥈', '🥉'];
 
   return (
-    <main style={{ maxWidth: 640, margin: '0 auto', padding: 16 }}>
-      <h1 style={{ fontSize: 22 }}>🏈 The Spread{season[0] ? ` — ${season[0].year}` : ''}</h1>
+    <main>
+      <header className="hero">
+        <div className="hero-inner">
+          <div className="hero-title">🏈 The Spread</div>
+          <div className="hero-sub">
+            {season[0] && <span className="gold">Season {season[0].year}</span>}
+            {week && (
+              <>
+                {' · '}{week.week.round === 'REG' ? `Week ${week.week.week_number}` : week.week.round}
+                {week.week.locked
+                  ? ' · 🔒 Locked'
+                  : ` · ${week.submitted_count} of ${week.player_count} in${week.week.lock_at ? ` · locks ${fmtKick(week.week.lock_at)} ET` : ''}`}
+              </>
+            )}
+          </div>
+        </div>
+      </header>
 
-      <h2 style={{ fontSize: 16, marginTop: 24 }}>Standings</h2>
-      <table style={{ borderCollapse: 'collapse', width: '100%' }}>
-        <thead><tr><th style={cell}>Player</th><th style={cell}>Pts</th><th style={cell}>W–L</th><th style={cell}>Streak</th></tr></thead>
-        <tbody>
-          {standings.map((s: any) => (
-            <tr key={s.display_name}>
-              <td style={cell}>{s.display_name}</td>
-              <td style={cell}>{num(s.total_points)}</td>
-              <td style={cell}>{s.wins}–{s.losses}</td>
-              <td style={cell}>{s.streak}</td>
-            </tr>
+      <div className="wrap">
+        <div className="section-title">Standings</div>
+        <div className="panel">
+          {standings.map((s: any, i: number) => (
+            <div className="row" key={s.display_name}>
+              <span className="rank">{medals[i] ?? i + 1}</span>
+              <span className="name">{s.display_name}</span>
+              <span className="wl">{s.wins}–{s.losses}</span>
+              {s.streak && <span className={`chip ${s.streak.startsWith('W') ? 'w' : 'l'}`}>{s.streak}</span>}
+              <span className="pts">{num(s.total_points)}</span>
+            </div>
           ))}
-        </tbody>
-      </table>
+        </div>
 
-      {week && (
-        <>
-          <h2 style={{ fontSize: 16, marginTop: 24 }}>
-            Week {week.week.week_number}{week.week.round !== 'REG' ? ` (${week.week.round})` : ''} ·{' '}
-            {week.week.locked ? 'LOCKED' : `${week.submitted_count} of ${week.player_count} in`}
-          </h2>
-          {week.week.lock_at && !week.week.locked && (
-            <p style={{ color: '#8b949e', fontSize: 13 }}>
-              Picks lock at first kickoff: {new Date(week.week.lock_at).toLocaleString('en-US', { timeZone: 'America/New_York' })} ET
-            </p>
-          )}
-          <table style={{ borderCollapse: 'collapse', width: '100%' }}>
-            <thead><tr><th style={cell}>Player</th><th style={cell}>Pick</th><th style={cell}>Lock line</th><th style={cell}>Final line</th><th style={cell}>Pts</th></tr></thead>
-            <tbody>
+        {week && (
+          <>
+            <div className="section-title">
+              {week.week.locked ? "This week's picks" : "Who's in"}
+            </div>
+            <div className="panel">
               {week.players.map((p: any) => (
-                <tr key={p.player_id}>
-                  <td style={cell}>{p.display_name}</td>
-                  <td style={cell}>{p.pick ? <><img src={`/logos/${p.pick.team_abbr}.png`} width={18} height={18} alt="" style={{ verticalAlign: 'middle' }} /> {p.pick.team_abbr}</> : p.has_picked ? '🔒 in' : '—'}</td>
-                  <td style={cell}>{p.pick ? fmt(p.pick.lock_time_spread) : ''}</td>
-                  <td style={cell}>{p.pick ? fmt(p.pick.official_spread) : ''}</td>
-                  <td style={cell}>{p.pick?.outcome ? `${num(p.pick.total_points)} (${p.pick.outcome})` : ''}</td>
-                </tr>
+                <div className="row" key={p.player_id}>
+                  <span className="name">{p.display_name}</span>
+                  {p.pick ? (
+                    <span className="pickcell">
+                      <img src={`/logos/${p.pick.team_abbr}.png`} width={24} height={24} alt="" />
+                      {p.pick.team_abbr}
+                      <span className={spreadClass(p.pick.official_spread ?? p.pick.lock_time_spread)}>
+                        {fmtSpread(p.pick.official_spread ?? p.pick.lock_time_spread)}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="pickcell mut">{p.has_picked ? '🔒 in' : '—'}</span>
+                  )}
+                  <span className={`pts ${p.pick?.outcome === 'W' ? 'pos' : p.pick?.outcome ? 'neg' : 'mut'}`}>
+                    {p.pick?.outcome ? `${num(p.pick.total_points)} ${p.pick.outcome}` : ''}
+                  </span>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
 
-          <h2 style={{ fontSize: 16, marginTop: 24 }}>Games</h2>
-          <table style={{ borderCollapse: 'collapse', width: '100%' }}>
-            <thead><tr><th style={cell}>Matchup</th><th style={cell}>Kickoff (ET)</th><th style={cell}>Line</th><th style={cell}>Score</th></tr></thead>
-            <tbody>
+            <div className="section-title">Games</div>
+            <div className="panel">
               {week.games.map((g: any) => (
-                <tr key={g.id}>
-                  <td style={cell}>{g.away.abbr} @ {g.home.abbr}</td>
-                  <td style={cell}>{new Date(g.kickoff_at).toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: '2-digit' })}</td>
-                  <td style={cell}>{g.home.spread != null ? `${g.home.abbr} ${fmt(g.home.spread)}` : '—'}</td>
-                  <td style={cell}>{g.status === 'SCHEDULED' ? '' : `${g.away.score ?? ''}–${g.home.score ?? ''} ${g.status === 'FINAL' ? 'F' : g.status}`}</td>
-                </tr>
+                <div className="row sm" key={g.id}>
+                  <span className="pickcell">
+                    <img src={`/logos/${g.away.abbr}.png`} width={20} height={20} alt="" />
+                    {g.away.abbr} @ {g.home.abbr}
+                    <img src={`/logos/${g.home.abbr}.png`} width={20} height={20} alt="" />
+                  </span>
+                  <span className="name" style={{ textAlign: 'right', fontWeight: 500, fontSize: 12, color: 'var(--muted)' }}>
+                    {fmtKick(g.kickoff_at)}
+                  </span>
+                  <span className="score">
+                    {g.status === 'SCHEDULED'
+                      ? (g.home.spread != null ? `${g.home.abbr} ${fmtSpread(g.home.spread)}` : '—')
+                      : `${g.away.score ?? ''}–${g.home.score ?? ''}${g.status === 'FINAL' ? ' F' : ''}`}
+                  </span>
+                </div>
               ))}
-            </tbody>
-          </table>
-        </>
-      )}
-      <p style={{ color: '#484f58', fontSize: 12, marginTop: 32 }}>Picks stay hidden until the week locks. Your team only has to win. <a href="/play" style={{ color: '#58a6ff' }}>Make your pick →</a></p>
+            </div>
+          </>
+        )}
+
+        <p className="footer-note">
+          Picks stay hidden until the week locks. Your team only has to win.{' '}
+          <a href="/play">Make your pick →</a>
+        </p>
+      </div>
     </main>
   );
 }

@@ -111,28 +111,28 @@ struct StandingsScreen: View {
 }
 
 struct HistoryScreen: View {
-    @State private var history: HistoryResponse?
+    @State private var standings: StandingsResponse?
     @State private var error: String?
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                if let history {
-                    HistoryListView(rows: history.picks)
+                if let standings {
+                    LeagueHistoryView(weeks: standings.weeks)
                 } else if let error {
                     ContentUnavailableView("Can't load", systemImage: "wifi.slash", description: Text(error))
                 } else {
                     ProgressView().padding(40)
                 }
             }
-            .navigationTitle("My Picks")
+            .navigationTitle("History")
             .refreshable { await load() }
             .task { await load() }
         }
     }
 
     private func load() async {
-        do { history = try await SpreadAPI.shared.history(); error = nil }
+        do { standings = try await SpreadAPI.shared.standings(); error = nil }
         catch { self.error = error.localizedDescription }
     }
 }

@@ -84,7 +84,8 @@ final class ExtensionModel: ObservableObject {
         guard let wk = week?.week else { return }
         do {
             let resp = try await SpreadAPI.shared.submitPick(weekId: wk.id, gameId: game.id, teamId: team.teamId)
-            stageBubble(resp: resp, weekId: wk.id)
+            stageBubble(weekId: wk.id, pickId: resp.pick.id, weekNumber: resp.weekNumber,
+                        submitted: resp.submittedCount, total: resp.playerCount, lockAt: resp.lockAt)
             let potential = (team.spread ?? 0) + 10 + (wk.playoffBonus ?? 0)
             showBanner("\(team.abbr) locked in for \(SpreadFormat.points(potential)) pts if they win — tap send ➤")
             await refresh()
@@ -114,7 +115,18 @@ final class ExtensionModel: ObservableObject {
         return MSSession()   // fallback: worst case is one extra bubble this week
     }
 
-    private func stageBubble(resp: PickResponse, weekId: String) {
+    /// The prominent path: re-stage the weekly bubble from current state and
+    /// collapse to compact so Messages' send button is right there.
+    func sendToChat() {
+        guard let week, let pick = week.myPick, let pickId = pick.pickId else { return }
+        stageBubble(weekId: week.week.id, pickId: pickId, weekNumber: week.week.weekNumber,
+                    submitted: week.submittedCount, total: week.playerCount, lockAt: week.week.lockAt)
+        showBanner("Staged — hit the blue ➤ to send")
+        controller?.requestPresentationStyle(.compact)
+    }
+
+    private func stageBubble(weekId: String, pickId: String, weekNumber: Int,
+                             submitted: Int, total: Int, lockAt: Date?) {
         guard let conv = conversation else { return }
         let session = session(forWeek: weekId)
         let message = MSMessage(session: session)
@@ -128,21 +140,18 @@ final class ExtensionModel: ObservableObject {
         comps.path = "/week"
         comps.queryItems = [
             URLQueryItem(name: "w", value: weekId),
-            URLQueryItem(name: "p", value: resp.pick.id),
+            URLQueryItem(name: "p", value: pickId),
         ]
         message.url = comps.url
 
         let layout = MSMessageTemplateLayout()
         layout.image = BubbleRenderer.render(
-            weekNumber: resp.weekNumber,
-            submitted: resp.submittedCount,
-            total: resp.playerCount,
-            lockAt: resp.lockAt
+            weekNumber: weekNumber, submitted: submitted, total: total, lockAt: lockAt
         )
-        layout.caption = "🏈 The Spread — Week \(resp.weekNumber)"
-        layout.subcaption = bubbleSubcaption(resp)
+        layout.caption = "🏈 The Spread — Week \(weekNumber)"
+        layout.subcaption = bubbleSubcaption(submitted: submitted, total: total, lockAt: lockAt)
         message.layout = layout
-        message.summaryText = "The Spread — Week \(resp.weekNumber)"
+        message.summaryText = "The Spread — Week \(weekNumber)"
 
         // Extensions cannot send. This stages the bubble in the input field;
         // the player taps send. Two taps, by design — never promise otherwise.
@@ -153,10 +162,10 @@ final class ExtensionModel: ObservableObject {
         }
     }
 
-    private func bubbleSubcaption(_ resp: PickResponse) -> String {
-        if let lockAt = resp.lockAt, lockAt <= Date() {
+    private func bubbleSubcaption(submitted: Int, total: Int, lockAt: Date?) -> String {
+        if let lockAt, lockAt <= Date() {
             return "Picks are locked — open to see the board"
         }
-        return "\(resp.submittedCount) of \(resp.playerCount) in · \(SpreadFormat.lockLine(resp.lockAt))"
+        return "\(submitted) of \(total) in · \(SpreadFormat.lockLine(lockAt))"
     }
 }
