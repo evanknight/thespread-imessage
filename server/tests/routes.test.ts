@@ -13,13 +13,14 @@ describe('standings and history routes', () => {
 
   it('standings: totals, W-L, ordered by points', async () => {
     const { GET } = await import('@/app/api/standings/route');
-    const res = await GET(apiReq('/api/standings', { token: token('Bob') }));
+    const res = await GET(apiReq('/api/standings', { token: token('Bob'), now: T.tuesdayAfter }));
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.season).toBe(2026);
-    expect(body.standings[0]).toMatchObject({ display_name: 'Alice', total_points: 7.5, wins: 1, losses: 0 });
+    expect(body.standings[0]).toMatchObject({ display_name: 'Alice', total_points: 7.5, wins: 1, losses: 0, streak: 'W1' });
     expect(body.standings).toHaveLength(5);
-    expect(body.weeks.some((w: any) => w.display_name === 'Alice' && w.picked_team === 'MIA')).toBe(true);
+    const aliceWeek = body.weeks.find((w: any) => w.display_name === 'Alice');
+    expect(aliceWeek).toMatchObject({ picked_team: 'MIA', home_abbr: 'MIA', away_abbr: 'BUF', home_score: 27, away_score: 20 });
   });
 
   it("history: another caller can see Alice's scored pick (week is over)", async () => {

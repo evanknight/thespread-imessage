@@ -11,7 +11,9 @@ final class ExtensionModel: ObservableObject {
     @Published var history: HistoryResponse?
     @Published var identity: StoredIdentity? = SpreadKeychain.load()
     @Published var banner: String?
+    @Published var bannerIsError = false
     @Published var isLoading = false
+    private var bannerTask: Task<Void, Never>?
 
     weak var controller: MSMessagesAppViewController?
 
@@ -62,10 +64,19 @@ final class ExtensionModel: ObservableObject {
             let id = StoredIdentity(playerId: resp.playerId, displayName: resp.displayName, token: resp.token)
             SpreadKeychain.save(id)
             identity = id
-            banner = "Enrolled as \(resp.displayName) ✓"
             await refresh()
         } catch {
-            banner = error.localizedDescription
+            showBanner(error.localizedDescription, isError: true)
+        }
+    }
+
+    func showBanner(_ text: String, isError: Bool = false) {
+        banner = text
+        bannerIsError = isError
+        bannerTask?.cancel()
+        bannerTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(5))
+            if !Task.isCancelled { self?.banner = nil }
         }
     }
 
@@ -75,13 +86,13 @@ final class ExtensionModel: ObservableObject {
             let resp = try await SpreadAPI.shared.submitPick(weekId: wk.id, gameId: game.id, teamId: team.teamId)
             stageBubble(resp: resp, weekId: wk.id)
             let potential = (team.spread ?? 0) + 10 + (wk.playoffBonus ?? 0)
-            banner = "\(team.abbr) locked in for \(SpreadFormat.points(potential)) pts if they win — now tap send ➤"
+            showBanner("\(team.abbr) locked in for \(SpreadFormat.points(potential)) pts if they win — tap send ➤")
             await refresh()
         } catch SpreadAPIError.locked {
-            banner = "Too late — picks locked at first kickoff."
+            showBanner("Too late — picks locked at first kickoff.", isError: true)
             await refresh()
         } catch {
-            banner = error.localizedDescription
+            showBanner(error.localizedDescription, isError: true)
         }
     }
 

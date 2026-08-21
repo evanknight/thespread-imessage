@@ -3,6 +3,25 @@ import UIKit
 
 // Reusable SwiftUI views shared by the host app and the Messages extension.
 
+struct TeamLogo: View {
+    let abbr: String?
+    var size: CGFloat = 22
+
+    var body: some View {
+        if let abbr, UIImage(named: "team-\(abbr)") != nil {
+            Image("team-\(abbr)")
+                .resizable()
+                .scaledToFit()
+                .frame(width: size, height: size)
+        }
+    }
+}
+
+func spreadColor(_ v: Double?) -> Color {
+    guard let v else { return .secondary }
+    return v > 0 ? .green : v < 0 ? .red : .secondary
+}
+
 struct StandingsListView: View {
     let standings: [StandingRow]
 
@@ -14,6 +33,13 @@ struct StandingsListView: View {
                         .frame(width: 20, alignment: .leading)
                     Text(medal(idx) + row.displayName).fontWeight(idx == 0 ? .bold : .regular)
                     Spacer()
+                    if let streak = row.streak, !streak.isEmpty {
+                        Text(streak)
+                            .font(.caption2.bold())
+                            .padding(.horizontal, 6).padding(.vertical, 2)
+                            .background(Capsule().fill(streak.hasPrefix("W") ? Color.green.opacity(0.18) : Color.red.opacity(0.18)))
+                            .foregroundStyle(streak.hasPrefix("W") ? Color.green : Color.red)
+                    }
                     Text("\(row.wins)–\(row.losses)").font(.caption).foregroundStyle(.secondary)
                     Text(SpreadFormat.points(row.totalPoints))
                         .font(.body.monospacedDigit()).fontWeight(.semibold)
@@ -42,9 +68,10 @@ struct WeekBoardView: View {
                     if let pick = p.pick, let abbr = pick.teamAbbr {
                         VStack(alignment: .trailing, spacing: 2) {
                             HStack(spacing: 6) {
+                                TeamLogo(abbr: abbr, size: 20)
                                 Text(abbr).fontWeight(.bold)
                                 Text(SpreadFormat.spread(pick.officialSpread ?? pick.lockTimeSpread))
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(spreadColor(pick.officialSpread ?? pick.lockTimeSpread))
                             }
                             // Rule B legibility: always show lock line vs final line.
                             if let lockLine = pick.lockTimeSpread, let final = pick.officialSpread, lockLine != final {
@@ -106,17 +133,25 @@ struct GameListView: View {
     private func teamButton(_ game: Game, _ team: TeamSide) -> some View {
         let mine = week.myPick?.teamId == team.teamId
         return Button { onPick(game, team) } label: {
-            VStack(spacing: 2) {
-                Text(team.abbr).fontWeight(.bold)
-                Text(SpreadFormat.spread(team.spread)).font(.caption)
-                if let spread = team.spread {
-                    // Risk/reward at a glance: what this pick pays if they win.
-                    Text("→ \(SpreadFormat.points(10 + spread + (week.week.playoffBonus ?? 0))) pts")
-                        .font(.caption2).opacity(0.75)
+            VStack(spacing: 3) {
+                HStack(spacing: 5) {
+                    TeamLogo(abbr: team.abbr, size: 24)
+                    Text(team.abbr).font(.callout.bold())
+                }
+                HStack(spacing: 4) {
+                    Text(SpreadFormat.spread(team.spread))
+                        .font(.caption.bold())
+                        .foregroundStyle(mine ? Color.white : spreadColor(team.spread))
+                    if let spread = team.spread {
+                        // Risk/reward at a glance: what this pick pays if they win.
+                        Text("→ \(SpreadFormat.points(10 + spread + (week.week.playoffBonus ?? 0)))")
+                            .font(.caption).opacity(0.7)
+                    }
                 }
             }
-            .frame(width: 96, height: 58)
-            .background(RoundedRectangle(cornerRadius: 8).fill(mine ? Color.accentColor : Color(.tertiarySystemBackground)))
+            .frame(maxWidth: .infinity, minHeight: 62)
+            .background(RoundedRectangle(cornerRadius: 10).fill(mine ? Color.accentColor : Color(.tertiarySystemBackground)))
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(mine ? Color.accentColor : Color(.separator).opacity(0.4), lineWidth: 1))
             .foregroundStyle(mine ? Color.white : Color.primary)
         }
         .buttonStyle(.plain)
@@ -142,6 +177,7 @@ struct HistoryListView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(weekLabel(r)).font(.caption).foregroundStyle(.secondary)
                         HStack(spacing: 6) {
+                            TeamLogo(abbr: r.pickedTeam, size: 18)
                             Text(r.pickedTeam ?? "—").fontWeight(.bold)
                             Text(SpreadFormat.spread(r.officialSpread ?? r.lockTimeSpread))
                                 .foregroundStyle(.secondary)

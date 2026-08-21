@@ -51,8 +51,11 @@ struct CompactView: View {
     @ViewBuilder
     private func statusLine(_ week: WeekResponse) -> some View {
         if let pick = week.myPick, let abbr = pick.teamAbbr {
-            Label("You're in: \(abbr)", systemImage: "checkmark.circle.fill")
-                .font(.subheadline).foregroundStyle(.green)
+            HStack(spacing: 6) {
+                TeamLogo(abbr: abbr, size: 22)
+                Label("You're in: \(abbr)", systemImage: "checkmark.circle.fill")
+                    .font(.subheadline).foregroundStyle(.green)
+            }
         } else {
             Label("No pick yet", systemImage: "exclamationmark.circle")
                 .font(.subheadline).foregroundStyle(.orange)
@@ -69,13 +72,6 @@ struct ExpandedView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if let banner = model.banner {
-                Text(banner)
-                    .font(.caption).padding(8).frame(maxWidth: .infinity)
-                    .background(.yellow.opacity(0.2))
-                    .onTapGesture { model.banner = nil }
-            }
-
             if model.identity == nil {
                 enrollForm
             } else {
@@ -105,6 +101,19 @@ struct ExpandedView: View {
                 }
             }
         }
+        .overlay(alignment: .bottom) {
+            if let banner = model.banner {
+                Text(banner)
+                    .font(.footnote.weight(.medium))
+                    .padding(.horizontal, 14).padding(.vertical, 9)
+                    .background(Capsule().fill(model.bannerIsError ? Color.red.opacity(0.92) : Color.green.opacity(0.92)))
+                    .foregroundStyle(.white)
+                    .padding(.bottom, 12)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .onTapGesture { model.banner = nil }
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: model.banner)
     }
 
     @ViewBuilder

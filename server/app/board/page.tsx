@@ -14,7 +14,7 @@ export default async function Board() {
   const season = await db.query<any>('select id, year from seasons order by year desc limit 1');
   const standings = season[0]
     ? await db.query<any>(
-        `select display_name, total_points, wins, losses from season_standings
+        `select display_name, total_points, wins, losses, streak from season_standings
          where season_id = $1 order by total_points desc, wins desc, display_name`,
         [season[0].id]
       )
@@ -29,13 +29,14 @@ export default async function Board() {
 
       <h2 style={{ fontSize: 16, marginTop: 24 }}>Standings</h2>
       <table style={{ borderCollapse: 'collapse', width: '100%' }}>
-        <thead><tr><th style={cell}>Player</th><th style={cell}>Pts</th><th style={cell}>W–L</th></tr></thead>
+        <thead><tr><th style={cell}>Player</th><th style={cell}>Pts</th><th style={cell}>W–L</th><th style={cell}>Streak</th></tr></thead>
         <tbody>
           {standings.map((s: any) => (
             <tr key={s.display_name}>
               <td style={cell}>{s.display_name}</td>
               <td style={cell}>{num(s.total_points)}</td>
               <td style={cell}>{s.wins}–{s.losses}</td>
+              <td style={cell}>{s.streak}</td>
             </tr>
           ))}
         </tbody>
@@ -58,7 +59,7 @@ export default async function Board() {
               {week.players.map((p: any) => (
                 <tr key={p.player_id}>
                   <td style={cell}>{p.display_name}</td>
-                  <td style={cell}>{p.pick ? p.pick.team_abbr : p.has_picked ? '🔒 in' : '—'}</td>
+                  <td style={cell}>{p.pick ? <><img src={`/logos/${p.pick.team_abbr}.png`} width={18} height={18} alt="" style={{ verticalAlign: 'middle' }} /> {p.pick.team_abbr}</> : p.has_picked ? '🔒 in' : '—'}</td>
                   <td style={cell}>{p.pick ? fmt(p.pick.lock_time_spread) : ''}</td>
                   <td style={cell}>{p.pick ? fmt(p.pick.official_spread) : ''}</td>
                   <td style={cell}>{p.pick?.outcome ? `${num(p.pick.total_points)} (${p.pick.outcome})` : ''}</td>

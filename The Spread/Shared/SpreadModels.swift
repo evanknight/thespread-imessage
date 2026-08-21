@@ -95,6 +95,7 @@ struct StandingRow: Codable, Identifiable {
     let wins: Int
     let losses: Int
     let picksMade: Int
+    let streak: String?
     var id: String { playerId }
 }
 

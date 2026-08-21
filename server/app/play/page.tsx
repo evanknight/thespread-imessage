@@ -12,7 +12,9 @@ const btn: React.CSSProperties = {
 };
 
 const fmtSpread = (v: number | null) => (v == null ? '—' : v === 0 ? 'PK' : v > 0 ? `+${v}` : `${v}`);
-const fmtPts = (v: number) => (v === Math.round(v) ? String(v) : String(v));
+const fmtPts = (v: number) => (v === Math.round(v) ? String(Math.round(v)) : String(v));
+const Logo = ({ abbr, size = 22 }: { abbr: string | null; size?: number }) =>
+  abbr ? <img src={`/logos/${abbr}.png`} width={size} height={size} alt={abbr} style={{ verticalAlign: 'middle' }} /> : null;
 
 export default function Play() {
   const [token, setToken] = useState<string | null>(null);
@@ -117,7 +119,7 @@ export default function Play() {
                 {week.players.map((p: any) => (
                   <tr key={p.player_id}>
                     <td style={{ padding: 4 }}>{p.display_name}</td>
-                    <td style={{ padding: 4 }}>{p.pick ? `${p.pick.team_abbr} ${fmtSpread(p.pick.official_spread ?? p.pick.lock_time_spread)}` : p.has_picked ? '🔒' : '—'}</td>
+                    <td style={{ padding: 4 }}>{p.pick ? <><Logo abbr={p.pick.team_abbr} size={18} /> {p.pick.team_abbr} {fmtSpread(p.pick.official_spread ?? p.pick.lock_time_spread)}</> : p.has_picked ? '🔒' : '—'}</td>
                     <td style={{ padding: 4, textAlign: 'right' }}>{p.pick?.outcome ? `${p.pick.total_points} (${p.pick.outcome})` : ''}</td>
                   </tr>
                 ))}
@@ -133,18 +135,23 @@ export default function Play() {
                   <span style={{ width: 84, fontSize: 12, color: '#8b949e' }}>
                     {new Date(g.kickoff_at).toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: '2-digit' })}
                   </span>
-                  {[g.away, g.home].map((t: any, i: number) => (
+                  {[g.away, g.home].map((t: any) => (
                     <button
                       key={t.team_id}
                       style={{
                         ...btn,
                         flex: 1,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                         background: week.my_pick?.team_id === t.team_id ? '#1f6feb' : btn.background,
                       }}
                       onClick={() => pick(g, t)}
                     >
-                      {t.abbr} {fmtSpread(t.spread)}
-                      {t.spread != null && <span style={{ opacity: 0.65 }}> → {fmtPts(10 + t.spread + (week.week.playoff_bonus ?? 0))}</span>}
+                      <Logo abbr={t.abbr} />
+                      <span>
+                        <b>{t.abbr}</b>{' '}
+                        <span style={{ color: t.spread == null ? undefined : t.spread > 0 ? '#3fb950' : '#f85149' }}>{fmtSpread(t.spread)}</span>
+                        {t.spread != null && <span style={{ opacity: 0.6 }}> → {fmtPts(10 + t.spread + (week.week.playoff_bonus ?? 0))}</span>}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -164,11 +171,41 @@ export default function Play() {
                   <td style={{ padding: 4, color: '#8b949e' }}>{i + 1}</td>
                   <td style={{ padding: 4 }}>{s.display_name}</td>
                   <td style={{ padding: 4 }}>{s.wins}–{s.losses}</td>
+                  <td style={{ padding: 4, color: s.streak?.startsWith('W') ? '#3fb950' : '#f85149', fontSize: 13 }}>{s.streak}</td>
                   <td style={{ padding: 4, textAlign: 'right', fontWeight: 600 }}>{s.total_points}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {standings && standings.weeks.length > 0 && (
+        <div style={box}>
+          <h2 style={{ fontSize: 16, marginTop: 0 }}>History</h2>
+          {Array.from(new Set(standings.weeks.map((w: any) => w.week_number))).map((wn: any) => (
+            <div key={wn} style={{ marginBottom: 10 }}>
+              <div style={{ color: '#8b949e', fontSize: 12, margin: '6px 0' }}>
+                {standings.weeks.find((w: any) => w.week_number === wn)?.round === 'REG' ? `Week ${wn}` : standings.weeks.find((w: any) => w.week_number === wn)?.round}
+              </div>
+              <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}>
+                <tbody>
+                  {standings.weeks.filter((w: any) => w.week_number === wn).map((w: any) => (
+                    <tr key={w.player_id + wn}>
+                      <td style={{ padding: 3 }}>{w.display_name}</td>
+                      <td style={{ padding: 3 }}><Logo abbr={w.picked_team} size={16} /> {w.picked_team ?? '—'} {w.picked_team ? fmtSpread(w.official_spread ?? w.lock_time_spread) : ''}</td>
+                      <td style={{ padding: 3, color: '#8b949e' }}>
+                        {w.home_score != null ? `${w.away_abbr} ${w.away_score}–${w.home_score} ${w.home_abbr}${w.game_status === 'FINAL' ? ' F' : ''}` : ''}
+                      </td>
+                      <td style={{ padding: 3, textAlign: 'right', fontWeight: 600, color: w.outcome === 'W' ? '#3fb950' : w.outcome ? '#f85149' : '#8b949e' }}>
+                        {w.outcome ? `${w.total_points} ${w.outcome}` : 'pending'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ))}
         </div>
       )}
     </main>
