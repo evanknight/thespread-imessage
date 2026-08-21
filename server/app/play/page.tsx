@@ -90,6 +90,10 @@ export default function Play() {
       <main>
         <Hero sub={<>Private NFL pick’em · <span className="gold">5 players</span></>} />
         <div className="wrap">
+          <nav className="navchips">
+            <span className="navchip active">Log in</span>
+            <a className="navchip" href="/board">Public board</a>
+          </nav>
           <div className="section-title">Join the game</div>
           <div className="panel" style={{ padding: 16 }}>
             <p style={{ margin: '0 0 10px', fontSize: 14, color: 'var(--muted)' }}>
@@ -104,7 +108,6 @@ export default function Play() {
             <button className="btn" onClick={enroll}>Enroll</button>
             {msg && <div className={`toast ${msg.kind}`}>{msg.text}</div>}
           </div>
-          <p className="footer-note"><a href="/board">Just want the board? →</a></p>
         </div>
       </main>
     );
@@ -135,10 +138,13 @@ export default function Play() {
     <main>
       <Hero sub={heroSub} />
       <div className={`wrap${showBar ? ' has-bar' : ''}`}>
+        <nav className="navchips">
+          <span className="navchip active">My picks</span>
+          <a className="navchip" href="/board">Public board</a>
+        </nav>
         <p className="meta">
           Playing as <b style={{ color: 'var(--text)' }}>{name}</b> ·{' '}
           <a className="linklike" onClick={() => { localStorage.clear(); setToken(null); }}>sign out</a>
-          {' '}· <a href="/board">public board</a>
         </p>
         {msg && <div className={`toast ${msg.kind}`}>{msg.text}</div>}
 

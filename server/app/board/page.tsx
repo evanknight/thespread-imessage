@@ -30,7 +30,13 @@ export default async function Board() {
     <main>
       <header className="hero">
         <div className="hero-inner">
-          <div className="hero-title">🏈 The Spread</div>
+          <div className="hero-row">
+            <div>
+              <div className="hero-title">🏈 The Spread</div>
+              <div className="hero-sub-placeholder" />
+            </div>
+            <a className="cta-gold" href="/play">Log in &amp; pick</a>
+          </div>
           <div className="hero-sub">
             {season[0] && <span className="gold">Season {season[0].year}</span>}
             {week && (
@@ -46,6 +52,10 @@ export default async function Board() {
       </header>
 
       <div className="wrap">
+        <nav className="navchips">
+          <a className="navchip" href="/play">My picks</a>
+          <span className="navchip active">Public board</span>
+        </nav>
         <div className="section-title">Standings</div>
         <div className="panel">
           {standings.map((s: any, i: number) => (
@@ -110,8 +120,7 @@ export default async function Board() {
         )}
 
         <p className="footer-note">
-          Picks stay hidden until the week locks. Your team only has to win.{' '}
-          <a href="/play">Make your pick →</a>
+          Picks stay hidden until the week locks. Your team only has to win.
         </p>
       </div>
     </main>

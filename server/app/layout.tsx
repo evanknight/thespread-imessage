@@ -249,6 +249,26 @@ img { vertical-align: middle; }
 .btn:active { transform: scale(0.98); }
 
 .footer-note { margin-top: 28px; font-size: 12.5px; color: var(--faint); text-align: center; }
+
+/* ------- nav chips + hero CTA ------- */
+.hero-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.cta-gold {
+  display: inline-block; flex: none;
+  padding: 10px 16px; border-radius: 999px;
+  background: var(--gold); color: #1a1500;
+  font-weight: 800; font-size: 13px;
+  letter-spacing: 0.05em; text-transform: uppercase;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+a.cta-gold:hover { text-decoration: none; filter: brightness(1.05); }
+.navchips { display: flex; gap: 8px; margin: 14px 0 2px; }
+.navchip {
+  padding: 9px 16px; border-radius: 999px;
+  background: var(--tile-bg); border: 1px solid var(--tile-border);
+  color: var(--text); font-weight: 700; font-size: 14px;
+}
+.navchip.active { background: var(--text); border-color: var(--text); color: var(--bg); }
+a.navchip:hover { text-decoration: none; }
 `;
 
 export default function RootLayout({ children }: { children: ReactNode }) {
