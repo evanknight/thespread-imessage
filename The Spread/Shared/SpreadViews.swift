@@ -222,6 +222,10 @@ struct GameListView: View {
 
     private func teamTile(_ game: Game, _ team: TeamSide) -> some View {
         let mine = week.myPick?.teamId == team.teamId
+        // Selected = primary ink (black in light mode, white in dark). Blue is
+        // reserved for the one true CTA: Send to chat.
+        let ink = Color.primary
+        let paper = Color(.systemBackground)
         return Button { onPick(game, team) } label: {
             VStack(spacing: 3) {
                 HStack(spacing: 7) {
@@ -230,25 +234,25 @@ struct GameListView: View {
                         Text(team.abbr).font(.headline)
                         Text(SpreadFormat.nickname(team.name))
                             .font(.system(size: 9, weight: .semibold))
-                            .foregroundStyle(mine ? Color.white.opacity(0.8) : Color.secondary)
+                            .foregroundStyle(mine ? paper.opacity(0.7) : Color.secondary)
                             .lineLimit(1)
                     }
                 }
                 HStack(spacing: 5) {
                     Text(SpreadFormat.spread(team.spread))
                         .font(.subheadline.weight(.bold))
-                        .foregroundStyle(mine ? Color.white : spreadColor(team.spread))
+                        .foregroundStyle(mine ? paper : spreadColor(team.spread))
                     if let spread = team.spread {
                         // Risk/reward at a glance: what this pick pays on a win.
                         Text("→ \(SpreadFormat.points(10 + spread + (week.week.playoffBonus ?? 0)))")
                             .font(.caption)
-                            .foregroundStyle(mine ? Color.white.opacity(0.8) : Color.secondary)
+                            .foregroundStyle(mine ? paper.opacity(0.7) : Color.secondary)
                     }
                 }
             }
             .frame(maxWidth: .infinity, minHeight: 68)
-            .background(RoundedRectangle(cornerRadius: 12).fill(mine ? Color.accentColor : Color(.systemGray6)))
-            .foregroundStyle(mine ? Color.white : Color.primary)
+            .background(RoundedRectangle(cornerRadius: 12).fill(mine ? ink : Color(.systemGray6)))
+            .foregroundStyle(mine ? paper : Color.primary)
         }
         .buttonStyle(.plain)
     }

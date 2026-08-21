@@ -87,47 +87,30 @@ enum SpreadTab: Int, CaseIterable {
     }
 }
 
-struct GlassTabBar: View {
+struct ChipTabBar: View {
     @Binding var selection: SpreadTab
-    @Namespace private var ns
 
     var body: some View {
-        HStack(spacing: 2) {
-            ForEach(SpreadTab.allCases, id: \.rawValue) { tab in
-                Button {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { selection = tab }
-                } label: {
-                    VStack(spacing: 2) {
-                        Image(systemName: tab.icon).font(.system(size: 14, weight: .semibold))
-                        Text(tab.title).font(.system(size: 10, weight: .semibold))
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 7)
-                    .background {
-                        if selection == tab {
-                            Capsule()
-                                .fill(Color.accentColor)
-                                .matchedGeometryEffect(id: "pill", in: ns)
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(SpreadTab.allCases, id: \.rawValue) { tab in
+                    Button {
+                        withAnimation(.easeOut(duration: 0.15)) { selection = tab }
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: tab.icon).font(.system(size: 13, weight: .semibold))
+                            Text(tab.title).font(.system(size: 14, weight: .semibold))
                         }
+                        .padding(.horizontal, 14).padding(.vertical, 9)
+                        .background(Capsule().fill(selection == tab ? Color.primary : Color(.systemGray6)))
+                        .foregroundStyle(selection == tab ? Color(.systemBackground) : Color.primary)
                     }
-                    .foregroundStyle(selection == tab ? .white : .secondary)
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
+            .padding(.horizontal, 12)
         }
-        .padding(4)
-        .background(glass)
-        .clipShape(Capsule())
-        .padding(.horizontal, 12).padding(.top, 8).padding(.bottom, 4)
-    }
-
-    @ViewBuilder
-    private var glass: some View {
-        if #available(iOS 26.0, *) {
-            Capsule().fill(.clear).glassEffect(.regular, in: Capsule())
-        } else {
-            Capsule().fill(.ultraThinMaterial)
-        }
+        .padding(.top, 10).padding(.bottom, 6)
     }
 }
 
@@ -145,7 +128,7 @@ struct ExpandedView: View {
                     Task { await model.enroll(code: code.trimmingCharacters(in: .whitespaces)) }
                 }
             } else {
-                GlassTabBar(selection: $tab)
+                ChipTabBar(selection: $tab)
 
                 ScrollView {
                     switch tab {
