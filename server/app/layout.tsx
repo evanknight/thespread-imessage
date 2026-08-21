@@ -179,10 +179,10 @@ img { vertical-align: middle; }
 }
 .tile:active { transform: scale(0.97); }
 .tile.selected {
-  background: var(--blue);
-  border-color: var(--blue);
-  color: #fff;
-  box-shadow: 0 4px 14px rgba(31, 111, 235, 0.35);
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--bg);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
 }
 .tile img { flex: none; }
 .tile-info { min-width: 0; display: flex; flex-direction: column; }
@@ -194,8 +194,9 @@ img { vertical-align: middle; }
 .tile.selected .tile-nick { color: rgba(255, 255, 255, 0.75); }
 .tile-line { font-size: 12.5px; font-weight: 600; white-space: nowrap; }
 .payout { color: var(--muted); font-weight: 600; }
-.tile.selected .pos, .tile.selected .neg, .tile.selected .mut { color: #fff; }
-.tile.selected .payout { color: rgba(255, 255, 255, 0.85); }
+.tile.selected .pos, .tile.selected .neg, .tile.selected .mut { color: var(--bg); }
+.tile.selected .payout { color: var(--bg); opacity: 0.8; }
+.tile.selected .tile-nick { color: var(--bg); opacity: 0.75; }
 
 /* ------- fixed pick bar ------- */
 .pickbar {
