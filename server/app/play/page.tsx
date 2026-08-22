@@ -11,6 +11,14 @@ const fmtPts = (v: number) => (v === Math.round(v) ? String(Math.round(v)) : Str
 const spreadClass = (v: number | null) => (v == null || v === 0 ? 'mut' : v > 0 ? 'pos' : 'neg');
 const fmtKick = (iso: string) =>
   new Date(iso).toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: '2-digit' });
+// Lock needs the calendar date too — "Wed 8:20 PM ET" alone is ambiguous when
+// the deadline is three weeks out.
+const fmtLock = (iso: string) => {
+  const d = new Date(iso);
+  const t = d.toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: '2-digit' });
+  const day = d.toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric' });
+  return `${t} ET (${day})`;
+};
 const weekLabel = (w: any) => (w.round === 'REG' ? `Week ${w.week_number}` : w.round);
 
 const Logo = ({ abbr, size = 22 }: { abbr: string | null; size?: number }) =>
@@ -168,6 +176,47 @@ function DetailSheet({ detail: d, onClose }: { detail: any; onClose: () => void 
   );
 }
 
+function AccountSheet({ name, onClose, onProfile, onSignOut }: any) {
+  return (
+    <div className="scrim" onClick={onClose}>
+      <div className="sheet" onClick={(e) => e.stopPropagation()}>
+        <div className="sheet-hero">
+          <button className="sheet-close" onClick={onClose}>×</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span className="avatar" style={{ width: 40, height: 40, fontSize: 17, background: 'rgba(255,255,255,0.15)' }}>
+              {(name ?? '?').slice(0, 1).toUpperCase()}
+            </span>
+            <div>
+              <div className="eyebrow" style={{ opacity: 0.7 }}>Signed in as</div>
+              <div style={{ fontSize: 22, fontWeight: 800 }}>{name}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ padding: '14px 16px 4px' }}>
+          <button className="navchip" style={{ width: '100%', marginBottom: 8 }} onClick={onProfile}>
+            View my season
+          </button>
+          <a className="navchip" style={{ display: 'block', width: '100%', textAlign: 'center', marginBottom: 8 }} href="/board">
+            Public board
+          </a>
+          <button
+            className="navchip"
+            style={{ width: '100%', color: 'var(--red)', borderColor: 'var(--red)' }}
+            onClick={onSignOut}
+          >
+            Sign out
+          </button>
+          <p style={{ fontSize: 11, color: 'var(--faint)', marginTop: 12 }}>
+            Signing out here doesn't affect the iMessage app — your enrollment code works on
+            every device at once.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PlayerProfile({ playerId, standings, onBack, onDetail, detailNode }: any) {
   const row = standings.standings.find((s: any) => s.player_id === playerId);
   const rank = standings.standings.findIndex((s: any) => s.player_id === playerId) + 1;
@@ -296,6 +345,7 @@ export default function Play() {
   const [week, setWeek] = useState<any>(null);
   const [standings, setStandings] = useState<any>(null);
   const [msg, setMsg] = useState<{ text: string; kind: 'ok' | 'err' } | null>(null);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [detail, setDetail] = useState<any>(null);
@@ -402,7 +452,7 @@ export default function Play() {
         : <>
             {' · '}{week.submitted_count} of {week.player_count} in
             {' · locks '}
-            {week.week.lock_at ? `${fmtKick(week.week.lock_at)} ET` : 'TBD'}
+            {week.week.lock_at ? fmtLock(week.week.lock_at) : 'TBD'}
           </>}
     </>
   ) : undefined;
@@ -426,11 +476,11 @@ export default function Play() {
         <nav className="navchips">
           <span className="navchip active">My picks</span>
           <a className="navchip" href="/board">Public board</a>
+          <button className="navchip account" onClick={() => setAccountOpen(true)}>
+            <span className="avatar">{(name ?? '?').slice(0, 1).toUpperCase()}</span>
+            {name}
+          </button>
         </nav>
-        <p className="meta">
-          Playing as <b style={{ color: 'var(--text)' }}>{name}</b> ·{' '}
-          <a className="linklike" onClick={() => { localStorage.clear(); setToken(null); }}>sign out</a>
-        </p>
         {msg && <div className={`toast ${msg.kind}`}>{msg.text}</div>}
 
         {week && (week.week.locked ? (
@@ -563,6 +613,19 @@ export default function Play() {
           </>
         )}
       </div>
+
+      {accountOpen && (
+        <AccountSheet
+          name={name}
+          onClose={() => setAccountOpen(false)}
+          onProfile={() => {
+            setAccountOpen(false);
+            const me = standings?.standings.find((s: any) => s.display_name === name);
+            if (me) setProfileId(me.player_id);
+          }}
+          onSignOut={() => { localStorage.clear(); setToken(null); setAccountOpen(false); }}
+        />
+      )}
 
       {detailId && (
         <DetailSheet detail={detail} onClose={() => setDetailId(null)} />

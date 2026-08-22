@@ -1,5 +1,8 @@
 import type { ReactNode } from 'react';
 import type { Viewport } from 'next';
+import { Inter } from 'next/font/google';
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
 export const metadata = {
   title: 'The Spread',
@@ -16,7 +19,6 @@ export const viewport: Viewport = {
 const css = `
 :root {
   color-scheme: light dark;
-  --condensed: "Avenir Next Condensed", "Helvetica Neue Condensed", "Arial Narrow", "Roboto Condensed", "Liberation Sans Narrow", sans-serif;
   --field-grad: linear-gradient(160deg, #0d4020 0%, #093018 52%, #051f10 100%);
   --yard-lines: repeating-linear-gradient(90deg, rgba(255,255,255,0.055) 0px, rgba(255,255,255,0.055) 2px, transparent 2px, transparent 46px);
   --gold: #ffd64d;
@@ -58,9 +60,15 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   line-height: 1.45;
+}
+/* Type contrast comes from three levers, not a second typeface:
+   weight (400/600/800), ALL CAPS with wider tracking for labels, and size. */
+.eyebrow {
+  font-size: 11px; font-weight: 800;
+  letter-spacing: 0.11em; text-transform: uppercase;
 }
 a { color: var(--blue); text-decoration: none; }
 a:hover { text-decoration: underline; }
@@ -79,25 +87,22 @@ img { vertical-align: middle; }
   padding: calc(20px + env(safe-area-inset-top)) 18px 16px;
 }
 .hero-title {
-  font-family: var(--condensed);
-  font-stretch: condensed;
   text-transform: uppercase;
   font-weight: 800;
-  font-size: 30px;
-  line-height: 1.1;
-  letter-spacing: 0.03em;
+  font-size: 27px;
+  line-height: 1.12;
+  letter-spacing: -0.005em;
   color: #fff;
 }
 .hero-sub {
-  margin-top: 6px;
-  font-family: var(--condensed);
-  font-stretch: condensed;
+  margin-top: 7px;
   text-transform: uppercase;
   font-weight: 700;
-  font-size: 15px;
-  letter-spacing: 0.06em;
-  color: rgba(255, 255, 255, 0.82);
+  font-size: 12px;
+  letter-spacing: 0.09em;
+  color: rgba(255, 255, 255, 0.78);
 }
+.hero-sub .gold { font-weight: 800; letter-spacing: 0.09em; }
 .gold { color: var(--gold); }
 
 /* ------- page scaffold ------- */
@@ -107,9 +112,9 @@ img { vertical-align: middle; }
 .linklike { color: var(--blue); cursor: pointer; }
 .section-title {
   margin: 24px 4px 8px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.09em;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.11em;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -213,8 +218,8 @@ img { vertical-align: middle; }
 .tile-info { min-width: 0; display: flex; flex-direction: column; }
 .tile-abbr { font-weight: 800; font-size: 15px; letter-spacing: 0.02em; line-height: 1.2; }
 .tile-nick {
-  font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
-  text-transform: uppercase; color: var(--faint); line-height: 1.3;
+  font-size: 9px; font-weight: 800; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--muted); line-height: 1.35;
 }
 .tile.selected .tile-nick { color: rgba(255, 255, 255, 0.75); }
 .tile-line { font-size: 12.5px; font-weight: 600; white-space: nowrap; }
@@ -241,9 +246,9 @@ img { vertical-align: middle; }
   box-shadow: 0 12px 32px rgba(3, 20, 10, 0.45);
 }
 .pickbar-label {
-  font-size: 11px; font-weight: 700;
-  letter-spacing: 0.08em; text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.65);
+  font-size: 10px; font-weight: 800;
+  letter-spacing: 0.11em; text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
 }
 .pickbar-main { font-size: 16px; font-weight: 800; line-height: 1.25; }
 
@@ -267,8 +272,8 @@ img { vertical-align: middle; }
   border: none; border-radius: 12px;
   background-image: var(--field-grad);
   color: #fff;
-  font-size: 15px; font-weight: 800;
-  letter-spacing: 0.06em; text-transform: uppercase;
+  font-size: 13px; font-weight: 800;
+  letter-spacing: 0.09em; text-transform: uppercase;
   cursor: pointer;
 }
 .btn:active { transform: scale(0.98); }
@@ -314,7 +319,10 @@ img { vertical-align: middle; }
 .matchup .mid { font-size: 11px; font-weight: 800; color: var(--muted); }
 .tag { font-size: 8px; font-weight: 900; letter-spacing: 0.08em; color: var(--muted); display: block; }
 
-.freshness { margin: 0 4px 6px; font-size: 11px; color: var(--faint); }
+.freshness {
+  margin: 0 4px 8px; font-size: 11px; font-weight: 600;
+  color: var(--text); opacity: 0.75;
+}
 
 .footer-note { margin-top: 28px; font-size: 12.5px; color: var(--faint); text-align: center; }
 
@@ -324,8 +332,8 @@ img { vertical-align: middle; }
   display: inline-block; flex: none;
   padding: 10px 16px; border-radius: 999px;
   background: var(--gold); color: #1a1500;
-  font-weight: 800; font-size: 13px;
-  letter-spacing: 0.05em; text-transform: uppercase;
+  font-weight: 800; font-size: 12px;
+  letter-spacing: 0.08em; text-transform: uppercase;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
 }
 a.cta-gold:hover { text-decoration: none; filter: brightness(1.05); }
@@ -336,12 +344,19 @@ a.cta-gold:hover { text-decoration: none; filter: brightness(1.05); }
   color: var(--text); font-weight: 700; font-size: 14px;
 }
 .navchip.active { background: var(--text); border-color: var(--text); color: var(--bg); }
+.navchip.account { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.avatar {
+  width: 20px; height: 20px; border-radius: 999px;
+  background: var(--field-grad); color: #fff;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 800;
+}
 a.navchip:hover { text-decoration: none; }
 `;
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className={inter.variable}>
       <body>
         <style dangerouslySetInnerHTML={{ __html: css }} />
         {children}

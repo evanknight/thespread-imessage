@@ -143,7 +143,7 @@ struct StandingsListView: View {
                 .frame(minWidth: 52, alignment: .trailing)
             if chevron {
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 11, weight: .semibold)).foregroundStyle(.tertiary)
+                    .font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
             }
         }
         .padding(.vertical, 12).padding(.horizontal, 14)
@@ -193,7 +193,7 @@ struct WeekBoardView: View {
                     } else if p.hasPicked {
                         Label("in", systemImage: "lock.fill").font(.caption).foregroundStyle(.secondary)
                     } else {
-                        Text("no pick yet").font(.caption).foregroundStyle(.tertiary)
+                        Text("no pick yet").font(.caption).foregroundStyle(.secondary)
                     }
                 }
                 .padding(.vertical, 10).padding(.horizontal, 14)
@@ -224,8 +224,8 @@ struct GameListView: View {
                 Text("DraftKings lines updated \(SpreadFormat.ago(week.linesUpdatedAt))")
                 Spacer()
             }
-            .font(.system(size: 10))
-            .foregroundStyle(.tertiary)
+            .font(.system(size: 10, weight: .semibold))
+            .foregroundStyle(.primary.opacity(0.75))
             .padding(.bottom, 6)
             ForEach(Array(week.games.enumerated()), id: \.element.id) { idx, game in
                 VStack(spacing: 8) {
@@ -234,7 +234,7 @@ struct GameListView: View {
                         .foregroundStyle(.secondary)
                     HStack(spacing: 10) {
                         teamTile(game, game.away)
-                        Text("@").font(.caption).foregroundStyle(.tertiary)
+                        Text("@").font(.caption).foregroundStyle(.secondary)
                         teamTile(game, game.home)
                     }
                 }
@@ -308,7 +308,7 @@ struct LiveBoardView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             HStack(spacing: 6) {
                                 Text(p.displayName).font(.subheadline.weight(.semibold))
-                                Text("·").foregroundStyle(.tertiary)
+                                Text("·").foregroundStyle(.secondary)
                                 Text(abbr).font(.subheadline.weight(.bold))
                                 Text(SpreadFormat.spread(pick.officialSpread ?? pick.lockTimeSpread))
                                     .font(.subheadline)
@@ -320,7 +320,7 @@ struct LiveBoardView: View {
                             }
                             if let lockLine = pick.lockTimeSpread, let final = pick.officialSpread, lockLine != final {
                                 Text("at lock \(SpreadFormat.spread(lockLine)) → final \(SpreadFormat.spread(final))")
-                                    .font(.caption2).foregroundStyle(.tertiary)
+                                    .font(.caption2).foregroundStyle(.secondary)
                             }
                         }
                         Spacer()
@@ -328,12 +328,12 @@ struct LiveBoardView: View {
                         if let pid = pick.pickId { DetailButton(pickId: pid) }
                     } else {
                         Image(systemName: p.hasPicked ? "lock.fill" : "zzz")
-                            .font(.title3).foregroundStyle(.tertiary)
+                            .font(.title3).foregroundStyle(.secondary)
                             .frame(width: 34)
                         Text(p.displayName).font(.subheadline.weight(.semibold))
                         Spacer()
                         Text(p.hasPicked ? "in" : "no pick")
-                            .font(.caption).foregroundStyle(.tertiary)
+                            .font(.caption).foregroundStyle(.secondary)
                     }
                 }
                 .padding(.vertical, 10).padding(.horizontal, 14)
@@ -367,10 +367,10 @@ struct LiveBoardView: View {
                     .foregroundStyle(outcome == "W" ? (pts < 0 ? Color.orange : Color.green)
                                      : outcome == "VOID" ? Color.orange : Color.red)
                 Text(outcome == "W" ? "win" : outcome == "L" ? "loss" : "")
-                    .font(.caption2).foregroundStyle(.tertiary)
+                    .font(.caption2).foregroundStyle(.secondary)
             }
         } else {
-            Text("pending").font(.caption).foregroundStyle(.tertiary)
+            Text("pending").font(.caption).foregroundStyle(.secondary)
         }
     }
 }
@@ -430,7 +430,7 @@ struct LeagueHistoryView: View {
                                 }
                             } else {
                                 Text("no pick")
-                                    .font(.caption).foregroundStyle(.tertiary)
+                                    .font(.caption).foregroundStyle(.secondary)
                             }
                             Spacer()
                             pointsBadge(r)
@@ -447,7 +447,7 @@ struct LeagueHistoryView: View {
     @ViewBuilder
     private func pointsBadge(_ r: WeekResultRow) -> some View {
         if r.pickedTeam == nil {
-            Text("0").font(.callout.weight(.bold).monospacedDigit()).foregroundStyle(.tertiary)
+            Text("0").font(.callout.weight(.bold).monospacedDigit()).foregroundStyle(.secondary)
         } else if let outcome = r.outcome, let pts = r.totalPoints {
             switch outcome {
             case "W":
@@ -462,7 +462,7 @@ struct LeagueHistoryView: View {
                 Text("—").font(.callout).foregroundStyle(.secondary)
             }
         } else {
-            Text("pending").font(.caption).foregroundStyle(.tertiary)
+            Text("pending").font(.caption).foregroundStyle(.secondary)
         }
     }
 }

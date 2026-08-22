@@ -302,7 +302,7 @@ struct ProfileView: View {
             }
 
             Text("New phone or broken drawer? Enter your enrollment code again in the host app — same code, same identity.")
-                .font(.caption2).foregroundStyle(.tertiary)
+                .font(.caption2).foregroundStyle(.secondary)
                 .padding(14)
         }
     }
@@ -346,7 +346,7 @@ struct ProfileView: View {
                     .font(.title3.weight(.bold).monospacedDigit())
                     .foregroundStyle(outcome == "W" ? (pts < 0 ? .orange : .green) : outcome == "VOID" ? .orange : .secondary)
             } else {
-                Text("pending").font(.caption).foregroundStyle(.tertiary)
+                Text("pending").font(.caption).foregroundStyle(.secondary)
             }
             if let pid = r.pickId { DetailButton(pickId: pid) }
         }

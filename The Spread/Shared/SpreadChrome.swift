@@ -73,7 +73,7 @@ struct WhosInStrip: View {
                 }
             }
             Text("Everyone's picks are revealed here at lock — nobody can see yours before then.")
-                .font(.caption2).foregroundStyle(.tertiary)
+                .font(.caption2).foregroundStyle(.secondary)
         }
         .padding(.horizontal, 14)
     }

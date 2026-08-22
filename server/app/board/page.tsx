@@ -25,6 +25,12 @@ export default async function Board() {
   const spreadClass = (v: number | null) => (v == null || v === 0 ? 'mut' : v > 0 ? 'pos' : 'neg');
   const fmtKick = (iso: string) =>
     new Date(iso).toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: '2-digit' });
+  const fmtLock = (iso: string) => {
+    const d = new Date(iso);
+    const t = d.toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: '2-digit' });
+    const day = d.toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric' });
+    return `${t} ET (${day})`;
+  };
   const medals = ['🥇', '🥈', '🥉'];
 
   return (
@@ -45,7 +51,7 @@ export default async function Board() {
                 {' · '}{week.week.round === 'REG' ? `Week ${week.week.week_number}` : week.week.round}
                 {week.week.locked
                   ? ' · 🔒 Locked'
-                  : ` · ${week.submitted_count} of ${week.player_count} in${week.week.lock_at ? ` · locks ${fmtKick(week.week.lock_at)} ET` : ''}`}
+                  : ` · ${week.submitted_count} of ${week.player_count} in${week.week.lock_at ? ` · locks ${fmtLock(week.week.lock_at)}` : ''}`}
               </>
             )}
           </div>

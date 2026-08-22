@@ -182,12 +182,14 @@ enum SpreadFormat {
         return "\(secs / 86400)d ago"
     }
 
+    /// "locks Wed 8:20 PM (Sep 9)" — the date matters when the deadline is
+    /// weeks out, not just which weekday.
     static func lockLine(_ d: Date?) -> String {
         guard let d else { return "lock TBD" }
-        let f = DateFormatter()
-        f.dateFormat = "EEE h:mm a"
         if d < Date() { return "locked" }
-        return "locks \(f.string(from: d))"
+        let time = DateFormatter(); time.dateFormat = "EEE h:mm a"
+        let day = DateFormatter(); day.dateFormat = "MMM d"
+        return "locks \(time.string(from: d)) (\(day.string(from: d)))"
     }
 }
 

@@ -97,7 +97,7 @@ struct PickDetailSheet: View {
             VStack(spacing: 2) {
                 Text(statusLabel(d)).font(.caption2.weight(.bold)).foregroundStyle(.secondary)
                 if d.game.status == "SCHEDULED", let k = d.game.kickoffAt {
-                    Text(kickoffFormat(k)).font(.caption2).foregroundStyle(.tertiary)
+                    Text(kickoffFormat(k)).font(.caption2).foregroundStyle(.secondary)
                 }
             }
             teamColumn(abbr: d.game.homeAbbr, score: d.game.homeScore,
@@ -156,7 +156,7 @@ struct PickDetailSheet: View {
                 .padding(.horizontal, 16).padding(.top, 12)
             Text("\(d.line.sampleCount) DraftKings samples")
                 .font(.system(size: 9, weight: .semibold))
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(.secondary)
                 .padding(.horizontal, 16).padding(.top, 4)
         }
     }
@@ -177,7 +177,7 @@ struct PickDetailSheet: View {
                     .font(.body.weight(emphasis ? .black : .semibold).monospacedDigit())
                     .foregroundStyle(spreadColor(point?.spread))
                 if let at = point?.capturedAt {
-                    Text(stampFormat(at)).font(.system(size: 9)).foregroundStyle(.tertiary)
+                    Text(stampFormat(at)).font(.system(size: 9)).foregroundStyle(.secondary)
                 }
             }
         }
@@ -210,7 +210,7 @@ struct PickDetailSheet: View {
                 Text(date.map(stampFormat) ?? "—")
                     .font(.subheadline.monospacedDigit())
                 if let note {
-                    Text(note).font(.caption2).foregroundStyle(.tertiary)
+                    Text(note).font(.caption2).foregroundStyle(.secondary)
                 }
             }
         }
@@ -238,7 +238,7 @@ struct PickDetailSheet: View {
                 .padding(.horizontal, 16).padding(.vertical, 6)
                 if result.outcome == "L" {
                     Text("A loss or tie always scores 0 — the spread only pays on an outright win.")
-                        .font(.caption2).foregroundStyle(.tertiary)
+                        .font(.caption2).foregroundStyle(.secondary)
                         .padding(.horizontal, 16)
                 }
             }
@@ -257,7 +257,7 @@ struct PickDetailSheet: View {
                 }
                 if !d.week.locked {
                     Text("Not final until this game kicks off — the official number is DraftKings' line right before kickoff.")
-                        .font(.caption2).foregroundStyle(.tertiary).padding(.top, 2)
+                        .font(.caption2).foregroundStyle(.secondary).padding(.top, 2)
                 }
             }
             .padding(.horizontal, 16).padding(.vertical, 4)
@@ -372,10 +372,10 @@ struct LineSparkline: View {
                         .position(x: CGFloat(vals.count - 1) * stepX, y: y(vals.last!))
                 }
                 .overlay(alignment: .topLeading) {
-                    Text(SpreadFormat.spread(hi)).font(.system(size: 9)).foregroundStyle(.tertiary)
+                    Text(SpreadFormat.spread(hi)).font(.system(size: 9)).foregroundStyle(.secondary)
                 }
                 .overlay(alignment: .bottomLeading) {
-                    Text(SpreadFormat.spread(lo)).font(.system(size: 9)).foregroundStyle(.tertiary)
+                    Text(SpreadFormat.spread(lo)).font(.system(size: 9)).foregroundStyle(.secondary)
                 }
             }
         }

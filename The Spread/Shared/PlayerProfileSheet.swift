@@ -85,7 +85,7 @@ struct PlayerProfileSheet: View {
                 .font(.system(size: 9, weight: .heavy)).foregroundStyle(.secondary)
             Text(value)
                 .font(.title3.weight(.bold).monospacedDigit()).foregroundStyle(color)
-            Text(sub).font(.system(size: 10)).foregroundStyle(.tertiary).lineLimit(1)
+            Text(sub).font(.system(size: 10)).foregroundStyle(.secondary).lineLimit(1)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(10)
@@ -113,22 +113,22 @@ struct PlayerProfileSheet: View {
                             }
                             if let h = w.homeAbbr, let a = w.awayAbbr, let hs = w.homeScore, let asc = w.awayScore {
                                 Text("\(a) \(asc)–\(hs) \(h)\(w.gameStatus == "FINAL" ? " F" : "")")
-                                    .font(.system(size: 10)).foregroundStyle(.tertiary)
+                                    .font(.system(size: 10)).foregroundStyle(.secondary)
                             }
                         }
                     } else {
-                        Text("no pick").font(.caption).foregroundStyle(.tertiary)
+                        Text("no pick").font(.caption).foregroundStyle(.secondary)
                     }
                     Spacer()
                     if w.pickedTeam == nil {
-                        Text("0").font(.callout.weight(.bold)).foregroundStyle(.tertiary)
+                        Text("0").font(.callout.weight(.bold)).foregroundStyle(.secondary)
                     } else if let outcome = w.outcome {
                         Text(outcome == "W" ? (pts(w) >= 0 ? "+\(SpreadFormat.points(pts(w)))" : SpreadFormat.points(pts(w)))
                              : outcome == "L" ? "0" : outcome)
                             .font(.callout.weight(.bold).monospacedDigit())
                             .foregroundStyle(outcome == "W" ? (pts(w) < 0 ? .orange : .green) : .red)
                     } else {
-                        Text("pending").font(.caption2).foregroundStyle(.tertiary)
+                        Text("pending").font(.caption2).foregroundStyle(.secondary)
                     }
                     if let pid = w.pickId { DetailButton(pickId: pid) }
                 }

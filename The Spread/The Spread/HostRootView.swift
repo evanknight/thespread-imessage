@@ -182,7 +182,7 @@ struct GamesPreviewList: View {
                 HStack(spacing: 10) {
                     TeamLogo(abbr: g.away.abbr, size: 26)
                     Text(g.away.abbr).font(.subheadline.weight(.semibold))
-                    Text("@").font(.caption2).foregroundStyle(.tertiary)
+                    Text("@").font(.caption2).foregroundStyle(.secondary)
                     TeamLogo(abbr: g.home.abbr, size: 26)
                     Text(g.home.abbr).font(.subheadline.weight(.semibold))
                     Spacer()
@@ -191,7 +191,7 @@ struct GamesPreviewList: View {
                             Text("\(g.home.abbr) \(SpreadFormat.spread(g.home.spread))")
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(spreadColor(g.home.spread))
-                            Text(kickoff(g)).font(.caption2).foregroundStyle(.tertiary)
+                            Text(kickoff(g)).font(.caption2).foregroundStyle(.secondary)
                         }
                     } else {
                         Text("\(g.away.score.map(String.init) ?? "–")–\(g.home.score.map(String.init) ?? "–")\(g.status == "FINAL" ? " F" : "")")
@@ -237,7 +237,7 @@ struct HistoryRowView: View {
                     .font(.title3.weight(.bold).monospacedDigit())
                     .foregroundStyle(outcome == "W" ? (pts < 0 ? .orange : .green) : outcome == "VOID" ? .orange : .secondary)
             } else {
-                Text("pending").font(.caption).foregroundStyle(.tertiary)
+                Text("pending").font(.caption).foregroundStyle(.secondary)
             }
             if let pid = row.pickId { DetailButton(pickId: pid) }
         }
@@ -269,7 +269,7 @@ struct SetupCard: View {
                     step("4", "Find The Spread and tap it — pin it for quick access.")
                     step("5", "Make your pick, then hit send so the group sees you're in.")
                     Text("TestFlight builds expire after 90 days. If the app stops opening mid-season, reinstall from the TestFlight link.")
-                        .font(.caption2).foregroundStyle(.tertiary).padding(.top, 4)
+                        .font(.caption2).foregroundStyle(.secondary).padding(.top, 4)
                 }
             }
         }
