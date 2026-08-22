@@ -17,89 +17,209 @@ struct ExtensionRootView: View {
 
 // MARK: - Compact (keyboard height, renders from cache)
 
+/// Right-hand region of the diagonal split (the opponent's side).
+struct DiagonalSide: Shape {
+    /// Where the split sits horizontally, 0...1.
+    var ratio: CGFloat = 0.60
+    /// How far the top edge leans past the bottom edge.
+    var skew: CGFloat = 0.16
+
+    func path(in rect: CGRect) -> Path {
+        var p = Path()
+        let topX = rect.width * (ratio + skew / 2)
+        let bottomX = rect.width * (ratio - skew / 2)
+        p.move(to: CGPoint(x: topX, y: 0))
+        p.addLine(to: CGPoint(x: rect.width, y: 0))
+        p.addLine(to: CGPoint(x: rect.width, y: rect.height))
+        p.addLine(to: CGPoint(x: bottomX, y: rect.height))
+        p.closeSubpath()
+        return p
+    }
+}
+
+/// The white slash between the two sides.
+struct DiagonalStripe: Shape {
+    var ratio: CGFloat = 0.60
+    var skew: CGFloat = 0.16
+    var thickness: CGFloat = 6
+
+    func path(in rect: CGRect) -> Path {
+        var p = Path()
+        let topX = rect.width * (ratio + skew / 2)
+        let bottomX = rect.width * (ratio - skew / 2)
+        p.move(to: CGPoint(x: topX, y: 0))
+        p.addLine(to: CGPoint(x: topX + thickness, y: 0))
+        p.addLine(to: CGPoint(x: bottomX + thickness, y: rect.height))
+        p.addLine(to: CGPoint(x: bottomX, y: rect.height))
+        p.closeSubpath()
+        return p
+    }
+}
+
+/// Compact (keyboard height). A matchup card split on the diagonal: your team
+/// takes the larger side with the full detail, the opponent gets the smaller
+/// side with just identity, so which one you picked is unmistakable at a glance.
 struct CompactView: View {
     @ObservedObject var model: ExtensionModel
 
-    var body: some View {
-        ZStack {
-            FieldBackground().ignoresSafeArea()
-            content
-                .padding(.horizontal, 18)
-        }
-    }
-
-    @ViewBuilder
-    private var content: some View {
-        if model.identity == nil {
-            VStack(spacing: 10) {
-                Text("🏈 THE SPREAD")
-                    .font(.system(size: 22, weight: .black))
-                    .foregroundStyle(gold)
-                Text("Pick a team. They only have to win.")
-                    .font(.caption).foregroundStyle(.white.opacity(0.8))
-                cta("Get set up")
-            }
-        } else if let week = model.week {
-            HStack(spacing: 14) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(week.week.round == "REG" ? "WEEK \(week.week.weekNumber)" : week.week.round)
-                        .font(.system(size: 26, weight: .black))
-                        .foregroundStyle(gold)
-                    if week.week.locked {
-                        Text("🔒 Locked")
-                            .font(.caption.weight(.bold)).foregroundStyle(.white)
-                    } else if let pick = week.myPick, let abbr = pick.teamAbbr {
-                        HStack(spacing: 6) {
-                            TeamLogo(abbr: abbr, size: 22)
-                            Text("You're riding \(abbr)")
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(.white)
-                        }
-                    } else {
-                        Label("No pick yet", systemImage: "exclamationmark.circle.fill")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.orange)
-                    }
-                    Text(statusLine(week))
-                        .font(.caption2).foregroundStyle(.white.opacity(0.7))
-                        .lineLimit(1).minimumScaleFactor(0.8)
-                }
-                Spacer(minLength: 4)
-                cta(week.week.locked ? "See board"
-                    : week.myPick == nil ? "Make pick" : "Change pick")
-                    .fixedSize()
-            }
-        } else {
-            VStack(spacing: 10) {
-                Text("🏈 THE SPREAD")
-                    .font(.system(size: 22, weight: .black))
-                    .foregroundStyle(gold)
-                cta("Open")
-            }
-        }
-    }
-
     private var gold: Color { Color(red: 1, green: 0.84, blue: 0.3) }
 
-    private func statusLine(_ week: WeekResponse) -> String {
-        week.week.locked
-            ? "\(week.submittedCount) of \(week.playerCount) picked"
-            : "\(week.submittedCount) of \(week.playerCount) in · \(SpreadFormat.lockLine(week.week.lockAt))"
+    var body: some View {
+        VStack(spacing: 0) {
+            card
+            button
+        }
+        .background(FieldBackground().ignoresSafeArea())
     }
 
-    private func cta(_ title: String) -> some View {
+    // MARK: card
+
+    @ViewBuilder
+    private var card: some View {
+        if model.identity == nil {
+            centered {
+                Text("🏈 THE SPREAD")
+                    .font(.system(size: 24, weight: .black)).foregroundStyle(gold)
+                Text("Pick a team. They only have to win.")
+                    .font(.caption).foregroundStyle(.white.opacity(0.85))
+            }
+        } else if let week = model.week {
+            if let matchup = myMatchup(week) {
+                matchupCard(week, matchup.mine, matchup.opponent)
+            } else {
+                centered {
+                    Text(weekLabel(week))
+                        .font(.system(size: 30, weight: .black)).foregroundStyle(gold)
+                    Label(week.week.locked ? "You sat this week out" : "No pick yet",
+                          systemImage: week.week.locked ? "moon.zzz.fill" : "exclamationmark.circle.fill")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(week.week.locked ? .white : .orange)
+                    Text(statusLine(week))
+                        .font(.caption).foregroundStyle(.white.opacity(0.75))
+                }
+            }
+        } else {
+            centered {
+                Text("🏈 THE SPREAD")
+                    .font(.system(size: 24, weight: .black)).foregroundStyle(gold)
+            }
+        }
+    }
+
+    private func matchupCard(_ week: WeekResponse, _ mine: TeamSide, _ opponent: TeamSide) -> some View {
+        ZStack {
+            // Opponent's side, dimmed back so it recedes.
+            DiagonalSide().fill(Color.black.opacity(0.34))
+            DiagonalStripe().fill(Color.white.opacity(0.9))
+            DiagonalStripe(thickness: 2)
+                .offset(x: 12)
+                .fill(Color.white.opacity(0.35))
+
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Text(weekLabel(week))
+                        .font(.system(size: 15, weight: .black)).foregroundStyle(gold)
+                    Spacer()
+                }
+                .padding(.horizontal, 16).padding(.top, 10)
+
+                HStack(alignment: .center, spacing: 0) {
+                    // Your team: the whole story.
+                    VStack(alignment: .leading, spacing: 3) {
+                        HStack(spacing: 8) {
+                            TeamLogo(abbr: mine.abbr, size: 42)
+                            Text(mine.abbr)
+                                .font(.system(size: 34, weight: .black))
+                                .foregroundStyle(.white)
+                        }
+                        HStack(spacing: 6) {
+                            Text(SpreadFormat.spread(mine.spread))
+                                .font(.subheadline.weight(.bold))
+                                .foregroundStyle(mine.spread ?? 0 > 0 ? Color.green : Color.white)
+                            if let sp = mine.spread {
+                                Text("→ \(SpreadFormat.points(10 + sp + (week.week.playoffBonus ?? 0))) pts")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(.white)
+                            }
+                        }
+                        Label(week.week.locked ? "LOCKED IN" : "YOUR PICK", systemImage: "checkmark.seal.fill")
+                            .font(.system(size: 10, weight: .heavy))
+                            .foregroundStyle(gold)
+                    }
+                    .padding(.leading, 16)
+
+                    Spacer(minLength: 0)
+
+                    // Opponent: identity only.
+                    VStack(spacing: 3) {
+                        TeamLogo(abbr: opponent.abbr, size: 24)
+                        Text(opponent.abbr)
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(.white.opacity(0.75))
+                    }
+                    .padding(.trailing, 18)
+                }
+                .padding(.top, 4)
+
+                Spacer(minLength: 0)
+
+                Text(statusLine(week))
+                    .font(.system(size: 11))
+                    .foregroundStyle(.white.opacity(0.7))
+                    .padding(.horizontal, 16).padding(.bottom, 10)
+            }
+        }
+        .clipped()
+    }
+
+    private func centered<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        VStack(spacing: 8) { content() }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.horizontal, 18)
+    }
+
+    // MARK: button
+
+    private var button: some View {
         Button { model.requestExpand() } label: {
-            Text(title)
+            Text(buttonTitle)
                 .font(.subheadline.weight(.bold))
-                .padding(.horizontal, 18).padding(.vertical, 11)
-                .background(Capsule().fill(gold))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 13)
+                .background(gold)
                 .foregroundStyle(.black)
         }
         .buttonStyle(.plain)
     }
-}
 
-// MARK: - Glass tab bar
+    private var buttonTitle: String {
+        guard model.identity != nil else { return "Get set up" }
+        guard let week = model.week else { return "Open" }
+        if week.week.locked { return "See the board" }
+        return week.myPick == nil ? "Make your pick" : "Change pick"
+    }
+
+    // MARK: helpers
+
+    private func myMatchup(_ week: WeekResponse) -> (mine: TeamSide, opponent: TeamSide)? {
+        guard let pick = week.myPick else { return nil }
+        for g in week.games {
+            if g.home.teamId == pick.teamId { return (g.home, g.away) }
+            if g.away.teamId == pick.teamId { return (g.away, g.home) }
+        }
+        return nil
+    }
+
+    private func weekLabel(_ week: WeekResponse) -> String {
+        week.week.round == "REG" ? "WEEK \(week.week.weekNumber)" : week.week.round
+    }
+
+    private func statusLine(_ week: WeekResponse) -> String {
+        week.week.locked
+            ? "Locked · \(week.submittedCount) of \(week.playerCount) picked"
+            : "\(week.submittedCount) of \(week.playerCount) in · \(SpreadFormat.lockLine(week.week.lockAt))"
+    }
+}
 
 // MARK: - Expanded
 

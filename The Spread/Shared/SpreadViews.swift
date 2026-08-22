@@ -256,7 +256,7 @@ struct GameListView: View {
         return Button {
             if mine, let onRemove { onRemove() } else { onPick(game, team) }
         } label: {
-            VStack(spacing: 3) {
+            VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 7) {
                     TeamLogo(abbr: team.abbr, size: 34)
                     VStack(alignment: .leading, spacing: 0) {
@@ -279,7 +279,8 @@ struct GameListView: View {
                     }
                 }
             }
-            .frame(maxWidth: .infinity, minHeight: 68)
+            .padding(.horizontal, 11)
+            .frame(maxWidth: .infinity, minHeight: 68, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: 12).fill(mine ? ink : Color(.systemGray6)))
             .overlay(alignment: .topTrailing) {
                 if mine {
