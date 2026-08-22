@@ -28,6 +28,146 @@ function Hero({ sub }: { sub?: ReactNode }) {
   );
 }
 
+const ago = (iso: string | null) => {
+  if (!iso) return 'not yet';
+  const secs = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (secs < 90) return 'just now';
+  if (secs < 3600) return `${Math.floor(secs / 60)} min ago`;
+  if (secs < 86400) return `${Math.floor(secs / 3600)} hr ago`;
+  return `${Math.floor(secs / 86400)}d ago`;
+};
+const stamp = (iso: string | null) =>
+  iso ? new Date(iso).toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—';
+
+function DetailSheet({ detail: d, onClose }: { detail: any; onClose: () => void }) {
+  if (!d) {
+    return (
+      <div className="scrim" onClick={onClose}>
+        <div className="sheet" onClick={(e) => e.stopPropagation()} style={{ padding: 40, textAlign: 'center' }}>
+          Loading…
+        </div>
+      </div>
+    );
+  }
+  const delta = d.line.delta_lock_to_kickoff;
+  const effective = d.line.official?.spread ?? d.line.current?.spread;
+  const head = d.result
+    ? d.result.outcome === 'W'
+      ? `${d.result.total_points > 0 ? '+' : ''}${d.result.total_points}`
+      : d.result.outcome === 'L' ? '0' : d.result.outcome
+    : `${d.potential_points ?? '—'}`;
+
+  const lineRow = (label: string, pt: any, tag?: string) =>
+    pt ? (
+      <div className="sheet-row">
+        <span className="k">{label} {tag && <b style={{ fontSize: 9, letterSpacing: '.08em' }}>{tag}</b>}</span>
+        <span className="v">
+          <span className={spreadClass(pt.spread)}>{fmtSpread(pt.spread)}</span>
+          <span style={{ color: 'var(--faint)', fontWeight: 500, fontSize: 11 }}> {stamp(pt.captured_at)}</span>
+        </span>
+      </div>
+    ) : null;
+
+  return (
+    <div className="scrim" onClick={onClose}>
+      <div className="sheet" onClick={(e) => e.stopPropagation()}>
+        <div className="sheet-hero">
+          <button className="sheet-close" onClick={onClose}>×</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Logo abbr={d.pick.team_abbr} size={40} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, opacity: 0.75 }}>{d.pick.display_name}</div>
+              <div style={{ fontSize: 22, fontWeight: 900 }}>
+                {d.pick.team_abbr} <span className="gold">{fmtSpread(effective)}</span>
+              </div>
+            </div>
+            <div style={{ fontSize: 28, fontWeight: 900 }}>{head}</div>
+          </div>
+          <div style={{ marginTop: 6, fontSize: 11, fontWeight: 800, letterSpacing: '.08em' }} className="gold">
+            {d.week.round === 'REG' ? `WEEK ${d.week.week_number}` : `${d.week.round} · BONUS +${d.week.playoff_bonus}`}
+          </div>
+        </div>
+
+        <div className="matchup">
+          <div className="col">
+            <Logo abbr={d.game.away_abbr} size={34} />
+            <div style={{ fontWeight: 700 }}>{d.game.away_abbr}</div>
+            <div className="sc" style={{ color: d.game.winner_abbr === d.game.away_abbr ? 'var(--green)' : undefined }}>
+              {d.game.away_score ?? '–'}
+            </div>
+            {!d.game.picked_is_home && <span className="tag">YOUR PICK</span>}
+          </div>
+          <div className="mid">{d.game.status === 'FINAL' ? 'FINAL' : d.game.status === 'SCHEDULED' ? 'VS' : d.game.status}</div>
+          <div className="col">
+            <Logo abbr={d.game.home_abbr} size={34} />
+            <div style={{ fontWeight: 700 }}>{d.game.home_abbr}</div>
+            <div className="sc" style={{ color: d.game.winner_abbr === d.game.home_abbr ? 'var(--green)' : undefined }}>
+              {d.game.home_score ?? '–'}
+            </div>
+            {d.game.picked_is_home && <span className="tag">YOUR PICK</span>}
+          </div>
+        </div>
+
+        <div className="sheet-sec">The line</div>
+        {lineRow('Opened', d.line.open)}
+        {lineRow('At lock', d.line.at_lock)}
+        {d.line.official ? lineRow('At kickoff', d.line.official, 'OFFICIAL') : lineRow('Right now', d.line.current, 'LIVE')}
+        {delta != null && delta !== 0 && (
+          <div className="sheet-note" style={{ color: delta > 0 ? 'var(--green)' : 'var(--red)' }}>
+            {delta > 0
+              ? `Moved +${delta} in your favour after lock — ${Math.abs(delta)} extra points.`
+              : `Moved ${delta} against you after lock — cost you ${Math.abs(delta)} points.`}
+          </div>
+        )}
+        {delta === 0 && <div className="sheet-note" style={{ color: 'var(--muted)' }}>The line never moved after lock.</div>}
+        <div className="sheet-note" style={{ color: 'var(--faint)', fontSize: 11 }}>
+          {d.line.sample_count} DraftKings samples recorded
+        </div>
+
+        <div className="sheet-sec">Timeline</div>
+        <div className="sheet-row"><span className="k">Picked</span><span className="v">{stamp(d.pick.submitted_at)}</span></div>
+        {d.pick.updated_at !== d.pick.submitted_at && (
+          <div className="sheet-row">
+            <span className="k">Last change{d.pick.change_count ? ` (${d.pick.change_count} switches)` : ''}</span>
+            <span className="v">{stamp(d.pick.updated_at)}</span>
+          </div>
+        )}
+        <div className="sheet-row"><span className="k">Picks locked</span><span className="v">{stamp(d.week.lock_at)}</span></div>
+        <div className="sheet-row"><span className="k">Kickoff</span><span className="v">{stamp(d.game.kickoff_at)}</span></div>
+        {d.result?.scored_at && (
+          <div className="sheet-row"><span className="k">Scored</span><span className="v">{stamp(d.result.scored_at)}</span></div>
+        )}
+
+        <div className="sheet-sec">Scoring</div>
+        {d.result ? (
+          <>
+            <div className="sheet-row"><span className="k">Base</span><span className="v">10</span></div>
+            <div className="sheet-row"><span className="k">Spread</span><span className="v">{fmtSpread(effective)}</span></div>
+            {d.week.playoff_bonus > 0 && (
+              <div className="sheet-row"><span className="k">Playoff bonus</span><span className="v">+{d.week.playoff_bonus}</span></div>
+            )}
+            <div className="sheet-row big">
+              <span className="k">{d.result.outcome === 'W' ? 'Won outright' : d.result.outcome === 'L' ? 'Did not win' : d.result.outcome}</span>
+              <span className={`v ${d.result.outcome === 'W' ? 'pos' : 'neg'}`}>{d.result.total_points}</span>
+            </div>
+            {d.result.outcome === 'L' && (
+              <div className="sheet-note" style={{ color: 'var(--faint)', fontSize: 11 }}>
+                A loss or tie always scores 0 — the spread only pays on an outright win.
+              </div>
+            )}
+            {d.result.note && <div className="sheet-note" style={{ color: 'var(--red)', fontSize: 11 }}>{d.result.note}</div>}
+          </>
+        ) : (
+          <>
+            <div className="sheet-row big"><span className="k">If {d.pick.team_abbr} wins</span><span className="v pos">{d.potential_points}</span></div>
+            <div className="sheet-row big"><span className="k">If they lose or tie</span><span className="v mut">0</span></div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function Play() {
   const [token, setToken] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
@@ -35,6 +175,17 @@ export default function Play() {
   const [week, setWeek] = useState<any>(null);
   const [standings, setStandings] = useState<any>(null);
   const [msg, setMsg] = useState<{ text: string; kind: 'ok' | 'err' } | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const [detail, setDetail] = useState<any>(null);
+
+  useEffect(() => {
+    if (!detailId || !token) { setDetail(null); return; }
+    let live = true;
+    fetch(`/api/pick/${detailId}`, { headers: { authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (live) setDetail(d); });
+    return () => { live = false; };
+  }, [detailId, token]);
 
   useEffect(() => {
     setToken(localStorage.getItem('spread_token'));
@@ -169,6 +320,9 @@ export default function Play() {
                   <span className={`pts ${p.pick?.outcome === 'W' ? 'pos' : p.pick?.outcome ? 'neg' : 'mut'}`}>
                     {p.pick?.outcome ? `${p.pick.total_points} ${p.pick.outcome}` : ''}
                   </span>
+                  {p.pick?.pick_id && (
+                    <button className="info-btn" onClick={() => setDetailId(p.pick.pick_id)} aria-label="Details">ⓘ</button>
+                  )}
                 </div>
               ))}
             </div>
@@ -177,6 +331,9 @@ export default function Play() {
           <>
             <div className="section-title">
               {week.my_pick ? 'Tap another team to change your pick' : 'Tap a team — win = 10 + spread'}
+            </div>
+            <div className="freshness">
+              ↻ DraftKings lines updated {ago(week.lines_updated_at)}
             </div>
             <div className="panel">
               {week.games.map((g: any) => (
@@ -260,6 +417,9 @@ export default function Play() {
                         <span className={`pts ${w.outcome === 'W' ? 'pos' : w.outcome ? 'neg' : 'mut'}`}>
                           {!w.picked_team ? '0' : w.outcome ? `${w.total_points} ${w.outcome}` : 'pending'}
                         </span>
+                        {w.pick_id && (
+                          <button className="info-btn" onClick={() => setDetailId(w.pick_id)} aria-label="Details">ⓘ</button>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -269,6 +429,10 @@ export default function Play() {
           </>
         )}
       </div>
+
+      {detailId && (
+        <DetailSheet detail={detail} onClose={() => setDetailId(null)} />
+      )}
 
       {showBar && week?.my_pick && (
         <div className="pickbar">

@@ -29,7 +29,7 @@ export async function GET(req: Request) {
   // Secrecy note: rows only for already-locked weeks — a not-yet-locked pick
   // must not leak through the season breakdown.
   const weekly = await db.query<any>(
-    `select week_id, week_number, round, player_id, display_name, picked_team,
+    `select week_id, week_number, round, player_id, display_name, pick_id, picked_team,
             official_spread, lock_time_spread, total_points, outcome,
             home_abbr, away_abbr, home_score, away_score, game_status
      from weekly_results

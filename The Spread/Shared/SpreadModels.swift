@@ -39,6 +39,7 @@ struct MyPick: Codable {
 }
 
 struct PickDetail: Codable {
+    let pickId: String?
     let gameId: String?
     let teamId: String?
     let teamAbbr: String?
@@ -59,6 +60,7 @@ struct PlayerRow: Codable, Identifiable {
 }
 
 struct WeekResponse: Codable {
+    let linesUpdatedAt: Date?
     let week: WeekMeta
     let games: [Game]
     let myPick: MyPick?
@@ -102,6 +104,7 @@ struct StandingRow: Codable, Identifiable {
 
 struct WeekResultRow: Codable, Identifiable {
     let weekId: String
+    let pickId: String?
     let weekNumber: Int
     let round: String
     let playerId: String
@@ -126,6 +129,7 @@ struct StandingsResponse: Codable {
 }
 
 struct HistoryRow: Codable, Identifiable {
+    let pickId: String?
     let weekNumber: Int
     let round: String
     let pickedTeam: String?
@@ -168,6 +172,16 @@ enum SpreadFormat {
         (fullName.components(separatedBy: " ").last ?? fullName).uppercased()
     }
 
+    /// "3 min ago" / "2 hr ago" — for the lines-freshness note.
+    static func ago(_ d: Date?) -> String {
+        guard let d else { return "not yet" }
+        let secs = Int(Date().timeIntervalSince(d))
+        if secs < 90 { return "just now" }
+        if secs < 3600 { return "\(secs / 60) min ago" }
+        if secs < 86400 { return "\(secs / 3600) hr ago" }
+        return "\(secs / 86400)d ago"
+    }
+
     static func lockLine(_ d: Date?) -> String {
         guard let d else { return "lock TBD" }
         let f = DateFormatter()
@@ -175,4 +189,78 @@ enum SpreadFormat {
         if d < Date() { return "locked" }
         return "locks \(f.string(from: d))"
     }
+}
+
+// MARK: - Pick detail (GET /api/pick/{id})
+
+struct LinePoint: Codable, Identifiable {
+    let snapshotId: String?
+    let capturedAt: Date?
+    let spread: Double?
+    var id: String { (snapshotId ?? "") + (capturedAt?.description ?? "") }
+}
+
+struct LineDetail: Codable {
+    let open: LinePoint?
+    let atLock: LinePoint?
+    let official: LinePoint?
+    let current: LinePoint?
+    let deltaLockToKickoff: Double?
+    let deltaOpenToNow: Double?
+    let series: [LinePoint]
+    let sampleCount: Int
+}
+
+struct PickInfo: Codable {
+    let id: String
+    let playerId: String
+    let displayName: String
+    let teamId: String
+    let teamAbbr: String
+    let teamName: String
+    let submittedAt: Date?
+    let updatedAt: Date?
+    let changeCount: Int
+    let isMine: Bool
+}
+
+struct GameInfo: Codable {
+    let id: String
+    let kickoffAt: Date?
+    let status: String
+    let homeAbbr: String
+    let homeName: String
+    let homeScore: Int?
+    let awayAbbr: String
+    let awayName: String
+    let awayScore: Int?
+    let winnerAbbr: String?
+    let pickedIsHome: Bool
+}
+
+struct ResultInfo: Codable {
+    let outcome: String
+    let basePoints: Double?
+    let bonusPoints: Double?
+    let totalPoints: Double?
+    let scoredAt: Date?
+    let note: String?
+}
+
+struct PickDetailResponse: Codable {
+    let pick: PickInfo
+    let week: WeekMeta2
+    let game: GameInfo
+    let line: LineDetail
+    let result: ResultInfo?
+    let potentialPoints: Double?
+}
+
+/// week block of the detail payload (subset of WeekMeta, no id)
+struct WeekMeta2: Codable {
+    let weekNumber: Int
+    let round: String
+    let lockAt: Date?
+    let locked: Bool
+    let playoffBonus: Double?
 }

@@ -248,6 +248,49 @@ img { vertical-align: middle; }
 }
 .btn:active { transform: scale(0.98); }
 
+/* ------- detail modal ------- */
+.info-btn {
+  flex: none; background: none; border: none; cursor: pointer;
+  color: var(--faint); font-size: 15px; padding: 2px 4px; line-height: 1;
+}
+.info-btn:hover { color: var(--blue); }
+.scrim {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(0,0,0,0.55);
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.sheet {
+  width: 100%; max-width: 560px;
+  max-height: 88vh; overflow-y: auto;
+  background: var(--surface);
+  border-radius: 18px 18px 0 0;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  animation: sheet-up 0.18s ease-out;
+}
+@keyframes sheet-up { from { transform: translateY(18px); opacity: 0.6; } to { transform: none; opacity: 1; } }
+.sheet-hero {
+  background-image: var(--yard-lines), var(--field-grad);
+  color: #fff; padding: 16px; border-radius: 18px 18px 0 0;
+}
+.sheet-close {
+  position: sticky; top: 0; float: right;
+  background: none; border: none; color: rgba(255,255,255,0.8);
+  font-size: 22px; cursor: pointer; line-height: 1;
+}
+.sheet-sec { margin: 16px 16px 6px; font-size: 11px; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
+.sheet-row { display: flex; align-items: baseline; justify-content: space-between; padding: 6px 16px; font-size: 14px; }
+.sheet-row .k { color: var(--muted); }
+.sheet-row .v { font-variant-numeric: tabular-nums; font-weight: 600; }
+.sheet-row.big .v { font-size: 17px; font-weight: 800; }
+.sheet-note { margin: 8px 16px 0; font-size: 12px; }
+.matchup { display: flex; align-items: center; justify-content: space-around; padding: 14px 16px; text-align: center; }
+.matchup .col { flex: 1; }
+.matchup .sc { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.matchup .mid { font-size: 11px; font-weight: 800; color: var(--muted); }
+.tag { font-size: 8px; font-weight: 900; letter-spacing: 0.08em; color: var(--muted); display: block; }
+
+.freshness { margin: 0 4px 6px; font-size: 11px; color: var(--faint); }
+
 .footer-note { margin-top: 28px; font-size: 12.5px; color: var(--faint); text-align: center; }
 
 /* ------- nav chips + hero CTA ------- */

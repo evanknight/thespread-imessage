@@ -43,6 +43,10 @@ struct SpreadAPI {
         try await request("POST", "/api/pick", body: ["week_id": weekId, "game_id": gameId, "team_id": teamId])
     }
 
+    func pickDetail(id: String) async throws -> PickDetailResponse {
+        try await request("GET", "/api/pick/\(id)")
+    }
+
     func standings() async throws -> StandingsResponse {
         try await request("GET", "/api/standings")
     }

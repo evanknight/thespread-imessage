@@ -2,7 +2,7 @@ import { getDb } from '@/lib/db';
 import { checkCronSecret } from '@/lib/auth';
 import { requestNow } from '@/lib/now';
 import { json, err } from '@/lib/http';
-import { fetchDraftKingsSpreads, snapshotEvents } from '@/lib/odds';
+import { fetchDraftKingsSpreadsBudgeted, snapshotEvents } from '@/lib/odds';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -38,11 +38,31 @@ export async function POST(req: Request) {
     [nowIso]
   );
 
-  if (dueGames.length === 0 && dueLocks.length === 0) {
-    return json({ skipped: true, reason: 'no games or locks in window' });
+  // Routine sampling: keep a line-movement series so players can see how the
+  // number drifted between lock and their kickoff. One call covers every game,
+  // so a 6-hour cadence costs ~28 credits/week — well inside the free tier.
+  const staleSeries = await db.query<{ id: string }>(
+    `select g.id from games g
+     where g.status = 'SCHEDULED'
+       and g.kickoff_at > coalesce($1::timestamptz, now())
+       and g.kickoff_at < coalesce($1::timestamptz, now()) + interval '14 days'
+       and not exists (
+         select 1 from odds_snapshots os
+         where os.game_id = g.id
+           and os.captured_at > coalesce($1::timestamptz, now()) - interval '6 hours'
+       )
+     limit 1`,
+    [nowIso]
+  );
+
+  if (dueGames.length === 0 && dueLocks.length === 0 && staleSeries.length === 0) {
+    return json({ skipped: true, reason: 'no games or locks in window, series fresh' });
   }
 
-  const events = await fetchDraftKingsSpreads();          // ONE call, all games
+  const events = await fetchDraftKingsSpreadsBudgeted(    // ONE call, all games
+    db, nowIso, dueGames.length ? 'kickoff-window' : dueLocks.length ? 'lock-window' : 'series-sample'
+  );
+  if (!events) return json({ skipped: true, reason: 'odds budget exhausted' });
   const result = await snapshotEvents(db, events, nowIso);
 
   for (const w of dueLocks) {
@@ -51,5 +71,9 @@ export async function POST(req: Request) {
       [w.id, nowIso]
     );
   }
-  return json({ ok: true, inserted: result.inserted, unmatched: result.unmatched, due_games: dueGames.length, due_locks: dueLocks.length });
+  return json({
+    ok: true, inserted: result.inserted, unmatched: result.unmatched,
+    due_games: dueGames.length, due_locks: dueLocks.length,
+    reason: dueGames.length || dueLocks.length ? 'kickoff/lock window' : 'routine 6h sample',
+  });
 }

@@ -1,6 +1,6 @@
 import type { Db } from './db';
 import { num } from './http';
-import { fetchDraftKingsSpreads, snapshotEvents } from './odds';
+import { fetchDraftKingsSpreadsBudgeted, snapshotEvents } from './odds';
 
 // Current week = the earliest week that still has an unfinished game.
 // Falls back to the latest week once the season is over.
@@ -38,25 +38,34 @@ export async function weekWithLockState(db: Db, weekId: string, nowIso: string |
   return rows[0] ?? null;
 }
 
-// §7 wants current DK spreads in week/current, but the gated snapshotter only fires
-// near kickoff/lock. So: if the freshest snapshot for this (unlocked) week is older
-// than 60 minutes, make one Odds API call and store it like any other snapshot.
-// Best-effort — the board must render even when the Odds API is down.
+// Freshness on page load. Refreshes when the newest line for this week is more
+// than 10 minutes old AND the week still has a game that hasn't kicked off —
+// line movement matters right up to each kickoff (Rule B), not just until lock.
+//
+// Two things make this safe to run on every load: the staleness gate is stored
+// in the DB (so N players hitting the board at once still produce at most one
+// call), and oddsBudget() enforces hard daily/monthly caps on top.
+const REFRESH_STALE_MINUTES = 10;
+
 export async function maybeRefreshOdds(db: Db, weekId: string, nowIso: string | null): Promise<void> {
   if (!process.env.ODDS_API_KEY) return;
-  const stale = await db.query<{ ok: boolean }>(
-    `select not exists (
-       select 1 from odds_snapshots os
-       join games g on g.id = os.game_id
-       where g.week_id = $1
-         and os.captured_at > coalesce($2::timestamptz, now()) - interval '60 minutes'
-     ) as ok`,
+  const check = await db.query<{ should: boolean }>(
+    `select
+       exists (select 1 from games g
+               where g.week_id = $1 and g.status = 'SCHEDULED'
+                 and g.kickoff_at > coalesce($2::timestamptz, now()))
+       and not exists (
+         select 1 from odds_snapshots os
+         join games g on g.id = os.game_id
+         where g.week_id = $1
+           and os.captured_at > coalesce($2::timestamptz, now()) - interval '${REFRESH_STALE_MINUTES} minutes'
+       ) as should`,
     [weekId, nowIso]
   );
-  if (!stale[0]?.ok) return;
+  if (!check[0]?.should) return;
   try {
-    const events = await fetchDraftKingsSpreads();
-    await snapshotEvents(db, events, nowIso);
+    const events = await fetchDraftKingsSpreadsBudgeted(db, nowIso, 'page-load');
+    if (events) await snapshotEvents(db, events, nowIso);
   } catch (e) {
     console.error('on-demand odds refresh failed (non-fatal):', e);
   }
@@ -94,6 +103,7 @@ export async function buildWeekPayload(db: Db, weekId: string, callerPlayerId: s
             (pk.id is not null) as has_picked,
             case when pl.id = $2 or (w.lock_at is not null and coalesce($3::timestamptz, now()) >= w.lock_at)
                  then pk.id end as pick_id,
+            pk.id as own_pick_id,
             case when pl.id = $2 or (w.lock_at is not null and coalesce($3::timestamptz, now()) >= w.lock_at)
                  then pk.game_id end as game_id,
             case when pl.id = $2 or (w.lock_at is not null and coalesce($3::timestamptz, now()) >= w.lock_at)
@@ -113,8 +123,15 @@ export async function buildWeekPayload(db: Db, weekId: string, callerPlayerId: s
     [weekId, callerPlayerId, nowIso]
   );
 
+  const freshness = await db.query<{ latest: string | null }>(
+    `select max(os.captured_at) as latest from odds_snapshots os
+     join games g on g.id = os.game_id where g.week_id = $1`,
+    [weekId]
+  );
+
   const my = picks.find((p) => p.player_id === callerPlayerId) ?? null;
   return {
+    lines_updated_at: freshness[0]?.latest ?? null,
     week: {
       id: week.id,
       week_number: week.week_number,
@@ -133,7 +150,7 @@ export async function buildWeekPayload(db: Db, weekId: string, callerPlayerId: s
       spread_captured_at: g.spread_captured_at,
     })),
     my_pick: my?.game_id
-      ? { pick_id: my.pick_id, game_id: my.game_id, team_id: my.team_id, team_abbr: my.team_abbr, submitted_at: my.submitted_at, updated_at: my.updated_at }
+      ? { pick_id: my.own_pick_id, game_id: my.game_id, team_id: my.team_id, team_abbr: my.team_abbr, submitted_at: my.submitted_at, updated_at: my.updated_at }
       : null,
     submitted_count: picks.filter((p) => p.has_picked).length,
     player_count: picks.length,
@@ -143,7 +160,7 @@ export async function buildWeekPayload(db: Db, weekId: string, callerPlayerId: s
       has_picked: p.has_picked,
       pick: p.game_id
         ? {
-            game_id: p.game_id, team_id: p.team_id, team_abbr: p.team_abbr,
+            pick_id: p.pick_id, game_id: p.game_id, team_id: p.team_id, team_abbr: p.team_abbr,
             official_spread: num(p.official_spread), lock_time_spread: num(p.lock_time_spread),
             base_points: num(p.base_points), bonus_points: num(p.bonus_points),
             total_points: num(p.total_points), outcome: p.outcome,

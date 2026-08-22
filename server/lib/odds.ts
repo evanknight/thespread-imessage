@@ -4,6 +4,51 @@ import type { Db } from './db';
 
 const ODDS_URL = 'https://api.the-odds-api.com/v4/sports/americanfootball_nfl/odds';
 
+// Free tier is 500 credits/month and one call = one credit. Keep headroom:
+// even if every player refreshes constantly, we cannot blow the budget.
+export const ODDS_DAILY_CAP = 40;
+export const ODDS_MONTHLY_CAP = 420;
+
+export interface BudgetState {
+  allowed: boolean;
+  today: number;
+  month: number;
+  reason?: string;
+}
+
+export async function oddsBudget(db: Db, nowIso: string | null): Promise<BudgetState> {
+  const rows = await db.query<{ today: string; month: string }>(
+    `select
+       count(*) filter (where called_at > coalesce($1::timestamptz, now()) - interval '24 hours') as today,
+       count(*) filter (where called_at > date_trunc('month', coalesce($1::timestamptz, now()))) as month
+     from odds_api_calls`,
+    [nowIso]
+  );
+  const today = Number(rows[0]?.today ?? 0);
+  const month = Number(rows[0]?.month ?? 0);
+  if (month >= ODDS_MONTHLY_CAP) return { allowed: false, today, month, reason: 'monthly cap' };
+  if (today >= ODDS_DAILY_CAP) return { allowed: false, today, month, reason: 'daily cap' };
+  return { allowed: true, today, month };
+}
+
+/// Budget-checked wrapper. Returns null when the caps say no — callers fall
+/// back to the newest stored snapshot rather than failing.
+export async function fetchDraftKingsSpreadsBudgeted(
+  db: Db, nowIso: string | null, reason: string
+): Promise<OddsEvent[] | null> {
+  const budget = await oddsBudget(db, nowIso);
+  if (!budget.allowed) {
+    console.warn(`odds call skipped (${budget.reason}): ${budget.today} today / ${budget.month} this month`);
+    return null;
+  }
+  const events = await fetchDraftKingsSpreads();
+  await db.query(
+    'insert into odds_api_calls (called_at, reason) values (coalesce($1::timestamptz, now()), $2)',
+    [nowIso, reason]
+  );
+  return events;
+}
+
 export interface OddsEvent {
   oddsApiEventId: string;
   homeName: string;

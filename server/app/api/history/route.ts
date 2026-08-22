@@ -18,7 +18,7 @@ export async function GET(req: Request) {
   // Note the lock guard: history never leaks a not-yet-locked pick, even your own
   // via someone else's token.
   const rows = await db.query<any>(
-    `select wr.week_number, wr.round, wr.picked_team, wr.submitted_at, wr.updated_at,
+    `select wr.pick_id, wr.week_number, wr.round, wr.picked_team, wr.submitted_at, wr.updated_at,
             wr.official_spread, wr.lock_time_spread, wr.base_points, wr.bonus_points,
             wr.total_points, wr.outcome, wr.manual_override_note,
             g.kickoff_at, g.status, g.home_score, g.away_score,

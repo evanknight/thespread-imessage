@@ -63,7 +63,7 @@ export async function runScorePicks(db: Db, nowIso: string | null): Promise<Scor
     // Line-at-lock, for the "you weren't cheated" display. Nullable.
     const lockSnap = p.lock_at
       ? await db.query<any>(
-          `select home_spread, away_spread from odds_snapshots
+          `select id, home_spread, away_spread from odds_snapshots
            where game_id = $1 and captured_at <= $2::timestamptz and home_spread is not null
            order by captured_at desc limit 1`,
           [p.game_id, p.lock_at]
@@ -71,14 +71,25 @@ export async function runScorePicks(db: Db, nowIso: string | null): Promise<Scor
       : [];
     const lockSpread = lockSnap[0] ? Number(isHome ? lockSnap[0].home_spread : lockSnap[0].away_spread) : null;
 
+    // Opening line: the first number we ever saw for this game.
+    const openSnap = await db.query<any>(
+      `select id, home_spread, away_spread from odds_snapshots
+       where game_id = $1 and home_spread is not null
+       order by captured_at asc limit 1`,
+      [p.game_id]
+    );
+    const openSpread = openSnap[0] ? Number(isHome ? openSnap[0].home_spread : openSnap[0].away_spread) : null;
+
     if (!snap[0]) {
       await db.query(
         `insert into pick_results (pick_id, outcome, base_points, bonus_points, total_points,
-                                   lock_time_spread, scored_at, manual_override_note)
-         values ($1, 'VOID', 0, 0, 0, $2, coalesce($3::timestamptz, now()),
+                                   lock_time_spread, lock_snapshot_id, open_spread, open_snapshot_id,
+                                   kickoff_at, scored_at, manual_override_note)
+         values ($1, 'VOID', 0, 0, 0, $2, $3, $4, $5, $6, coalesce($7::timestamptz, now()),
                  'AUTO: no odds snapshot available — needs manual spread via /api/admin/override')
          on conflict (pick_id) do nothing`,
-        [p.pick_id, lockSpread, nowIso]
+        [p.pick_id, lockSpread, lockSnap[0]?.id ?? null, openSpread, openSnap[0]?.id ?? null,
+         p.kickoff_at, nowIso]
       );
       voided.push({ pick_id: p.pick_id, game: `${p.away_abbr} @ ${p.home_abbr}` });
       continue;
@@ -91,12 +102,16 @@ export async function runScorePicks(db: Db, nowIso: string | null): Promise<Scor
       playoffBonus: Number(p.playoff_bonus),
     });
 
+    // official_spread + snapshot_id are the permanent record of the number that
+    // scored this pick: written once, never rewritten on a re-run.
     await db.query(
       `insert into pick_results (pick_id, official_spread, snapshot_id, lock_time_spread,
+                                 lock_snapshot_id, open_spread, open_snapshot_id, kickoff_at,
                                  base_points, bonus_points, total_points, outcome, scored_at)
-       values ($1, $2, $3, $4, $5, $6, $7, $8, coalesce($9::timestamptz, now()))
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, coalesce($13::timestamptz, now()))
        on conflict (pick_id) do nothing`,
-      [p.pick_id, signedSpread, snap[0].id, lockSpread,
+      [p.pick_id, signedSpread, snap[0].id, lockSpread, lockSnap[0]?.id ?? null,
+       openSpread, openSnap[0]?.id ?? null, p.kickoff_at,
        result.base_points, result.bonus_points, result.total_points, result.outcome, nowIso]
     );
     scored++;

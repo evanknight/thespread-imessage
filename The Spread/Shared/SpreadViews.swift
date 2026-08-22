@@ -173,6 +173,7 @@ struct WeekBoardView: View {
                                     .foregroundStyle(outcome == "W" ? .green : outcome == "VOID" ? .orange : .red)
                             }
                         }
+                        if let pid = p.pick?.pickId { DetailButton(pickId: pid) }
                     } else if p.hasPicked {
                         Label("in", systemImage: "lock.fill").font(.caption).foregroundStyle(.secondary)
                     } else {
@@ -202,6 +203,14 @@ struct GameListView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            HStack(spacing: 4) {
+                Image(systemName: "clock.arrow.circlepath").font(.system(size: 9))
+                Text("DraftKings lines updated \(SpreadFormat.ago(week.linesUpdatedAt))")
+                Spacer()
+            }
+            .font(.system(size: 10))
+            .foregroundStyle(.tertiary)
+            .padding(.bottom, 6)
             ForEach(Array(week.games.enumerated()), id: \.element.id) { idx, game in
                 VStack(spacing: 8) {
                     Text(kickoffLabel(game))
@@ -300,6 +309,7 @@ struct LiveBoardView: View {
                         }
                         Spacer()
                         outcomeBadge(pick)
+                        if let pid = pick.pickId { DetailButton(pickId: pid) }
                     } else {
                         Image(systemName: p.hasPicked ? "lock.fill" : "zzz")
                             .font(.title3).foregroundStyle(.tertiary)
@@ -408,6 +418,7 @@ struct LeagueHistoryView: View {
                             }
                             Spacer()
                             pointsBadge(r)
+                            if let pid = r.pickId { DetailButton(pickId: pid) }
                         }
                         .padding(.vertical, 7).padding(.horizontal, 14)
                     }

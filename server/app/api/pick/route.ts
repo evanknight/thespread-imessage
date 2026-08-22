@@ -37,8 +37,11 @@ export async function POST(req: Request) {
        on conflict (player_id, week_id) do update
          set game_id = excluded.game_id,
              team_id = excluded.team_id,
-             updated_at = excluded.updated_at
-       returning id, game_id, team_id, submitted_at, updated_at`,
+             updated_at = excluded.updated_at,
+             -- only counts an actual switch, not a re-tap of the same team
+             change_count = picks.change_count
+               + case when picks.team_id is distinct from excluded.team_id then 1 else 0 end
+       returning id, game_id, team_id, submitted_at, updated_at, change_count`,
       [week_id, game_id, player.id, team_id, nowIso]
     );
   } catch (e: any) {
