@@ -256,31 +256,35 @@ struct GameListView: View {
         return Button {
             if mine, let onRemove { onRemove() } else { onPick(game, team) }
         } label: {
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 7) {
-                    TeamLogo(abbr: team.abbr, size: 34)
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text(team.abbr).font(.headline)
-                        Text(SpreadFormat.nickname(team.name))
-                            .font(.system(size: 9, weight: .semibold))
-                            .foregroundStyle(mine ? paper.opacity(0.7) : Color.secondary)
-                            .lineLimit(1)
+            // Logo owns the left edge; three left-aligned lines sit beside it.
+            HStack(spacing: 10) {
+                TeamLogo(abbr: team.abbr, size: 46)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(team.abbr)
+                        .font(.system(size: 17, weight: .bold))
+                    Text(mine ? "TAP TO CLEAR" : SpreadFormat.nickname(team.name))
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(mine ? paper.opacity(0.8) : Color.secondary)
+                        .lineLimit(1)
+                    HStack(spacing: 4) {
+                        // Same size on both: the payout matters at least as
+                        // much as the line it came from.
+                        Text(SpreadFormat.spread(team.spread))
+                            .foregroundStyle(mine ? paper : spreadColor(team.spread))
+                        if let spread = team.spread {
+                            Text("→ \(SpreadFormat.points(10 + spread + (week.week.playoffBonus ?? 0)))")
+                                .foregroundStyle(mine ? paper : Color.primary)
+                        }
                     }
+                    .font(.system(size: 14, weight: .bold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .padding(.top, 2)
                 }
-                HStack(spacing: 5) {
-                    Text(SpreadFormat.spread(team.spread))
-                        .font(.subheadline.weight(.bold))
-                        .foregroundStyle(mine ? paper : spreadColor(team.spread))
-                    if let spread = team.spread {
-                        // Risk/reward at a glance: what this pick pays on a win.
-                        Text("→ \(SpreadFormat.points(10 + spread + (week.week.playoffBonus ?? 0)))")
-                            .font(.caption)
-                            .foregroundStyle(mine ? paper.opacity(0.7) : Color.secondary)
-                    }
-                }
+                Spacer(minLength: 0)
             }
-            .padding(.horizontal, 11)
-            .frame(maxWidth: .infinity, minHeight: 68, alignment: .leading)
+            .padding(.horizontal, 10)
+            .frame(maxWidth: .infinity, minHeight: 74, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: 12).fill(mine ? ink : Color(.systemGray6)))
             .overlay(alignment: .topTrailing) {
                 if mine {

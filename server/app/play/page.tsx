@@ -548,7 +548,7 @@ export default function Play() {
                           title={week.my_pick?.team_id === t.team_id ? 'Click to clear your pick' : undefined}
                         >
                           {week.my_pick?.team_id === t.team_id && <span className="tile-x">✕</span>}
-                          <Logo abbr={t.abbr} size={36} />
+                          <Logo abbr={t.abbr} size={46} />
                           <span className="tile-info">
                             <span className="tile-abbr">{t.abbr}</span>
                             <span className="tile-nick">
@@ -557,7 +557,7 @@ export default function Play() {
                             <span className="tile-line">
                               <span className={spreadClass(t.spread)}>{fmtSpread(t.spread)}</span>
                               {t.spread != null && (
-                                <span className="payout"> → {fmtPts(10 + t.spread + bonus)} pts</span>
+                                <span className="payout"> → {fmtPts(10 + t.spread + bonus)}</span>
                               )}
                             </span>
                           </span>

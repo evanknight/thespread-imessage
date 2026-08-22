@@ -174,7 +174,7 @@ img { vertical-align: middle; }
   position: relative;
   flex: 1 1 0; min-width: 0;
   display: flex; align-items: center; gap: 10px;
-  padding: 10px 12px;
+  padding: 9px 10px;
   background: var(--tile-bg);
   border: 1px solid var(--tile-border);
   border-radius: 14px;
@@ -217,14 +217,17 @@ img { vertical-align: middle; }
 }
 .tile img { flex: none; }
 .tile-info { min-width: 0; display: flex; flex-direction: column; }
-.tile-abbr { font-weight: 800; font-size: 15px; letter-spacing: 0.02em; line-height: 1.2; }
+.tile-abbr { font-weight: 800; font-size: 17px; letter-spacing: 0.01em; line-height: 1.2; }
 .tile-nick {
   font-size: 9px; font-weight: 800; letter-spacing: 0.1em;
   text-transform: uppercase; color: var(--muted); line-height: 1.35;
 }
 .tile.selected .tile-nick { color: rgba(255, 255, 255, 0.75); }
-.tile-line { font-size: 12.5px; font-weight: 600; white-space: nowrap; }
-.payout { color: var(--text); font-weight: 700; }
+.tile-line {
+  font-size: 14px; font-weight: 700; white-space: nowrap;
+  margin-top: 2px;
+}
+.payout { color: var(--text); font-weight: 700; font-size: 14px; }
 .tile.selected .pos, .tile.selected .neg, .tile.selected .mut { color: var(--bg); }
 .tile.selected .payout { color: var(--bg); opacity: 0.8; }
 .tile.selected .tile-nick { color: var(--bg); opacity: 0.75; }
