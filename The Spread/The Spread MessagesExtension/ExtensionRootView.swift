@@ -45,21 +45,22 @@ struct CompactView: View {
                 Text("🏈 THE SPREAD")
                     .font(.system(size: 24, weight: .black)).foregroundStyle(gold)
                 Text("Pick a team. They only have to win.")
-                    .font(.caption).foregroundStyle(.white.opacity(0.85))
+                    .font(.system(size: 14, weight: .medium)).foregroundStyle(.white.opacity(0.85))
             }
         } else if let week = model.week {
             if let m = myMatchup(week) {
                 matchupBlock(week, m.mine, m.opponent)
             } else {
-                VStack(spacing: 6) {
+                VStack(spacing: 9) {
                     Text(weekLabel(week))
-                        .font(.system(size: 28, weight: .black)).foregroundStyle(gold)
+                        .font(.system(size: 30, weight: .black)).foregroundStyle(gold)
                     Label(week.week.locked ? "You sat this week out" : "No pick yet",
                           systemImage: week.week.locked ? "moon.zzz.fill" : "exclamationmark.circle.fill")
-                        .font(.subheadline.weight(.semibold))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(week.week.locked ? .white : .orange)
                     Text(statusLine(week))
-                        .font(.caption).foregroundStyle(.white.opacity(0.75))
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.8))
                 }
             }
         } else {
@@ -70,53 +71,51 @@ struct CompactView: View {
 
     /// Left-aligned internals inside a block that is itself centred, so the
     /// payout and seal line up under your team rather than under the matchup.
+    /// Weight carries the ownership, not colour: both abbreviations are the
+    /// same size, yours is black and the opponent's is medium and dimmed.
     private func matchupBlock(_ week: WeekResponse, _ mine: TeamSide, _ opponent: TeamSide) -> some View {
-        VStack(alignment: .leading, spacing: 7) {
+        VStack(alignment: .leading, spacing: 11) {
             Text(weekLabel(week))
-                .font(.system(size: 13, weight: .black)).foregroundStyle(gold)
+                .font(.system(size: 16, weight: .black))
+                .foregroundStyle(gold)
+                .tracking(0.5)
 
-            HStack(alignment: .firstTextBaseline, spacing: 9) {
-                TeamLogo(abbr: mine.abbr, size: 34)
-                    .alignmentGuide(.firstTextBaseline) { $0[.bottom] - 6 }
+            HStack(spacing: 10) {
+                TeamLogo(abbr: mine.abbr, size: 32)
                 Text(mine.abbr)
-                    .font(.system(size: 32, weight: .black))
+                    .font(.system(size: 30, weight: .black))
                     .foregroundStyle(.white)
                 Text("vs")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.55))
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.5))
                 Text(opponent.abbr)
-                    .font(.system(size: 19, weight: .bold))
-                    .foregroundStyle(.white.opacity(0.8))
-                TeamLogo(abbr: opponent.abbr, size: 22)
-                    .alignmentGuide(.firstTextBaseline) { $0[.bottom] - 4 }
+                    .font(.system(size: 30, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.65))
+                TeamLogo(abbr: opponent.abbr, size: 26)
+                    .opacity(0.85)
             }
 
-            HStack(spacing: 7) {
-                Text(SpreadFormat.spread(mine.spread))
-                    .font(.subheadline.weight(.bold))
-                    .foregroundStyle((mine.spread ?? 0) > 0 ? Color.green : Color.white)
+            HStack(spacing: 10) {
                 if let sp = mine.spread {
-                    Text("→ \(SpreadFormat.points(10 + sp + (week.week.playoffBonus ?? 0))) pts")
-                        .font(.subheadline.weight(.semibold))
+                    Text("\(SpreadFormat.points(10 + sp + (week.week.playoffBonus ?? 0))) pts")
+                        .font(.system(size: 22, weight: .bold))
                         .foregroundStyle(.white)
                 }
+                Label(week.week.locked ? "LOCKED IN" : "YOUR PICK", systemImage: "checkmark.seal.fill")
+                    .font(.system(size: 12, weight: .heavy))
+                    .foregroundStyle(gold)
             }
 
-            Label(week.week.locked ? "LOCKED IN" : "YOUR PICK", systemImage: "checkmark.seal.fill")
-                .font(.system(size: 10, weight: .heavy))
-                .foregroundStyle(gold)
-
             Text(statusLine(week))
-                .font(.system(size: 11))
-                .foregroundStyle(.white.opacity(0.7))
-                .padding(.top, 1)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(.white.opacity(0.8))
         }
     }
 
     private var button: some View {
         Button { model.requestExpand() } label: {
             Text(buttonTitle)
-                .font(.subheadline.weight(.bold))
+                .font(.system(size: 17, weight: .bold))
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
                 .background(Capsule().fill(gold))
