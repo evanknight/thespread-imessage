@@ -145,10 +145,13 @@ final class ExtensionModel: ObservableObject {
         message.url = comps.url
 
         let layout = MSMessageTemplateLayout()
+        let senderName = identity?.displayName
         layout.image = BubbleRenderer.render(
-            weekNumber: weekNumber, submitted: submitted, total: total, lockAt: lockAt
+            weekNumber: weekNumber, submitted: submitted, total: total,
+            lockAt: lockAt, senderName: senderName
         )
-        layout.caption = "🏈 The Spread — Week \(weekNumber)"
+        layout.caption = senderName.map { "🏈 \($0) is in — Week \(weekNumber)" }
+            ?? "🏈 The Spread — Week \(weekNumber)"
         layout.subcaption = bubbleSubcaption(submitted: submitted, total: total, lockAt: lockAt)
         message.layout = layout
         message.summaryText = "The Spread — Week \(weekNumber)"
