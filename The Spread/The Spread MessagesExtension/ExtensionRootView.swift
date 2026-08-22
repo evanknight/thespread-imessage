@@ -107,6 +107,7 @@ struct ExpandedView: View {
     @ObservedObject var model: ExtensionModel
     @State private var tab: SpreadTab = .thisWeek
     @State private var code = ""
+    @State private var profileId: String?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -121,8 +122,10 @@ struct ExpandedView: View {
                     switch tab {
                     case .thisWeek: thisWeekTab
                     case .leaderboard:
-                        if let s = model.standings { StandingsListView(standings: s.standings).padding(.vertical, 4) }
-                        else { ProgressView().padding(30).task { await model.loadStandings() } }
+                        if let s = model.standings {
+                            StandingsListView(standings: s.standings) { profileId = $0 }
+                                .padding(.vertical, 4)
+                        } else { ProgressView().padding(30).task { await model.loadStandings() } }
                     case .history:
                         if let s = model.standings { LeagueHistoryView(weeks: s.weeks) }
                         else { ProgressView().padding(30).task { await model.loadStandings() } }
@@ -156,6 +159,13 @@ struct ExpandedView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: model.banner)
+        .sheet(item: Binding(get: { profileId.map(Identified.init) }, set: { profileId = $0?.id })) { wrapped in
+            if let s = model.standings {
+                PlayerProfileSheet(playerId: wrapped.id, standings: s)
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
+            }
+        }
     }
 
     // This Week is a state machine:

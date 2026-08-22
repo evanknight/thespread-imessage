@@ -103,35 +103,51 @@ struct PickHero: View {
 
 struct StandingsListView: View {
     let standings: [StandingRow]
+    /// When supplied, rows become buttons that open that player's profile.
+    var onSelect: ((String) -> Void)? = nil
 
     var body: some View {
         VStack(spacing: 0) {
             ForEach(Array(standings.enumerated()), id: \.element.id) { idx, row in
-                HStack(spacing: 10) {
-                    Text(medal(idx))
-                        .font(.title3)
-                        .frame(width: 34)
-                    Text(row.displayName)
-                        .font(.body.weight(idx == 0 ? .bold : .regular))
-                    Spacer()
-                    if let streak = row.streak, !streak.isEmpty {
-                        Text(streak)
-                            .font(.caption2.bold())
-                            .padding(.horizontal, 7).padding(.vertical, 3)
-                            .background(Capsule().fill(streak.hasPrefix("W") ? Color.green.opacity(0.16) : Color.red.opacity(0.16)))
-                            .foregroundStyle(streak.hasPrefix("W") ? Color.green : Color.red)
-                    }
-                    Text("\(row.wins)–\(row.losses)")
-                        .font(.caption).foregroundStyle(.secondary)
-                        .frame(minWidth: 34)
-                    Text(SpreadFormat.points(row.totalPoints))
-                        .font(.title3.weight(.bold).monospacedDigit())
-                        .frame(minWidth: 52, alignment: .trailing)
+                if let onSelect {
+                    Button { onSelect(row.playerId) } label: { rowContent(idx, row, chevron: true) }
+                        .buttonStyle(.plain)
+                } else {
+                    rowContent(idx, row, chevron: false)
                 }
-                .padding(.vertical, 12).padding(.horizontal, 14)
                 if idx < standings.count - 1 { Divider().padding(.leading, 14) }
             }
         }
+    }
+
+    private func rowContent(_ idx: Int, _ row: StandingRow, chevron: Bool) -> some View {
+        HStack(spacing: 10) {
+            Text(medal(idx))
+                .font(.title3)
+                .frame(width: 34)
+            Text(row.displayName)
+                .font(.body.weight(idx == 0 ? .bold : .regular))
+            Spacer()
+            if let streak = row.streak, !streak.isEmpty {
+                Text(streak)
+                    .font(.caption2.bold())
+                    .padding(.horizontal, 7).padding(.vertical, 3)
+                    .background(Capsule().fill(streak.hasPrefix("W") ? Color.green.opacity(0.16) : Color.red.opacity(0.16)))
+                    .foregroundStyle(streak.hasPrefix("W") ? Color.green : Color.red)
+            }
+            Text("\(row.wins)–\(row.losses)")
+                .font(.caption).foregroundStyle(.secondary)
+                .frame(minWidth: 34)
+            Text(SpreadFormat.points(row.totalPoints))
+                .font(.title3.weight(.bold).monospacedDigit())
+                .frame(minWidth: 52, alignment: .trailing)
+            if chevron {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold)).foregroundStyle(.tertiary)
+            }
+        }
+        .padding(.vertical, 12).padding(.horizontal, 14)
+        .contentShape(Rectangle())
     }
 
     private func medal(_ idx: Int) -> String {

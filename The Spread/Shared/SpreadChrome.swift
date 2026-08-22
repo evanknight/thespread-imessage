@@ -123,3 +123,8 @@ struct EnrollFieldView: View {
         }
     }
 }
+
+/// Tiny wrapper so a plain String id can drive `.sheet(item:)`.
+struct Identified: Identifiable {
+    let id: String
+}

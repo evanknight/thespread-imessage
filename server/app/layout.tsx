@@ -178,6 +178,31 @@ img { vertical-align: middle; }
   transition: transform 0.06s ease, background-color 0.12s ease, border-color 0.12s ease;
 }
 .tile:active { transform: scale(0.97); }
+@media (hover: hover) {
+  .tile:hover { border-color: var(--blue); background: var(--surface); transform: translateY(-1px); }
+  .tile.selected:hover { filter: brightness(1.12); border-color: var(--text); background: var(--text); transform: translateY(-1px); }
+  .row.tappable:hover { background: var(--tile-bg); }
+  .navchip:hover { border-color: var(--blue); }
+  .info-btn:hover { color: var(--blue); }
+}
+.row.tappable { cursor: pointer; transition: background-color 0.12s ease; }
+.row.tappable .name { text-decoration: underline; text-decoration-color: var(--divider); text-underline-offset: 3px; }
+
+/* ------- player profile ------- */
+.back-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  margin: 14px 0 4px; padding: 8px 14px; border-radius: 999px;
+  background: var(--tile-bg); border: 1px solid var(--tile-border);
+  color: var(--text); font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.statgrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 4px; }
+.stat {
+  background: var(--surface); border: 1px solid var(--divider);
+  border-radius: 12px; padding: 10px 12px;
+}
+.stat .lab { font-size: 10px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); }
+.stat .val { font-size: 19px; font-weight: 800; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.stat .sub { font-size: 11px; color: var(--faint); }
 .tile.selected {
   background: var(--text);
   border-color: var(--text);

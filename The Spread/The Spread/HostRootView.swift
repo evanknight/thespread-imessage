@@ -9,6 +9,7 @@ struct HostRootView: View {
     @State private var standings: StandingsResponse?
     @State private var history: HistoryResponse?
     @State private var error: String?
+    @State private var profileId: String?
 
     var body: some View {
         if identity == nil {
@@ -29,8 +30,10 @@ struct HostRootView: View {
                     switch tab {
                     case .thisWeek: thisWeekTab
                     case .leaderboard:
-                        if let s = standings { StandingsListView(standings: s.standings).padding(.vertical, 4) }
-                        else { ProgressView().padding(40) }
+                        if let s = standings {
+                            StandingsListView(standings: s.standings) { profileId = $0 }
+                                .padding(.vertical, 4)
+                        } else { ProgressView().padding(40) }
                     case .history:
                         if let s = standings { LeagueHistoryView(weeks: s.weeks) }
                         else { ProgressView().padding(40) }
@@ -40,6 +43,11 @@ struct HostRootView: View {
                 .refreshable { await loadAll() }
             }
             .task { await loadAll() }
+            .sheet(item: Binding(get: { profileId.map(Identified.init) }, set: { profileId = $0?.id })) { wrapped in
+                if let s = standings {
+                    PlayerProfileSheet(playerId: wrapped.id, standings: s)
+                }
+            }
         }
     }
 

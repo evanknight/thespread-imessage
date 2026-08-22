@@ -168,6 +168,127 @@ function DetailSheet({ detail: d, onClose }: { detail: any; onClose: () => void 
   );
 }
 
+function PlayerProfile({ playerId, standings, onBack, onDetail, detailNode }: any) {
+  const row = standings.standings.find((s: any) => s.player_id === playerId);
+  const rank = standings.standings.findIndex((s: any) => s.player_id === playerId) + 1;
+  const weeks = standings.weeks
+    .filter((w: any) => w.player_id === playerId)
+    .sort((a: any, b: any) => b.week_number - a.week_number);
+
+  const withPick = weeks.filter((w: any) => w.picked_team);
+  const scored = withPick.filter((w: any) => w.outcome === 'W' || w.outcome === 'L');
+  const pts = (w: any) => Number(w.total_points ?? 0);
+
+  const best = scored.length ? scored.reduce((a: any, b: any) => (pts(b) > pts(a) ? b : a)) : null;
+  const worst = scored.length ? scored.reduce((a: any, b: any) => (pts(b) < pts(a) ? b : a)) : null;
+  const avg = scored.length ? (scored.reduce((t: number, w: any) => t + pts(w), 0) / scored.length) : null;
+
+  const spreadOf = (w: any) => w.official_spread ?? w.lock_time_spread;
+  const dogs = scored.filter((w: any) => (spreadOf(w) ?? 0) > 0);
+  const favs = scored.filter((w: any) => (spreadOf(w) ?? 0) < 0);
+  const recOf = (list: any[]) => `${list.filter((w) => w.outcome === 'W').length}–${list.filter((w) => w.outcome === 'L').length}`;
+
+  const counts: Record<string, number> = {};
+  for (const w of withPick) counts[w.picked_team] = (counts[w.picked_team] ?? 0) + 1;
+  const favTeam = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  const avgSpread = scored.length
+    ? scored.reduce((t: number, w: any) => t + (spreadOf(w) ?? 0), 0) / scored.length
+    : null;
+  const noPicks = weeks.filter((w: any) => !w.picked_team).length;
+
+  return (
+    <main>
+      <header className="hero">
+        <div className="hero-inner">
+          <div className="hero-title">{row?.display_name}</div>
+          <div className="hero-sub">
+            <span className="gold">#{rank}</span> · {row?.total_points} PTS · {row?.wins}–{row?.losses}
+            {row?.streak ? <> · {row.streak}</> : null}
+          </div>
+        </div>
+      </header>
+      <div className="wrap">
+        <button className="back-chip" onClick={onBack}>← Back</button>
+
+        <div className="section-title">Season</div>
+        <div className="statgrid">
+          <div className="stat">
+            <div className="lab">Avg / pick</div>
+            <div className="val">{avg != null ? avg.toFixed(1) : '—'}</div>
+            <div className="sub">{scored.length} scored week{scored.length === 1 ? '' : 's'}</div>
+          </div>
+          <div className="stat">
+            <div className="lab">Avg spread taken</div>
+            <div className="val">{avgSpread != null ? fmtSpread(Number(avgSpread.toFixed(1))) : '—'}</div>
+            <div className="sub">{dogs.length} dogs · {favs.length} favs</div>
+          </div>
+          <div className="stat">
+            <div className="lab">Best week</div>
+            <div className="val pos">{best ? `+${best.total_points}` : '—'}</div>
+            <div className="sub">{best ? `${best.picked_team} · Week ${best.week_number}` : 'no results yet'}</div>
+          </div>
+          <div className="stat">
+            <div className="lab">Worst week</div>
+            <div className="val neg">{worst ? worst.total_points : '—'}</div>
+            <div className="sub">{worst ? `${worst.picked_team} · Week ${worst.week_number}` : 'no results yet'}</div>
+          </div>
+          <div className="stat">
+            <div className="lab">As underdog</div>
+            <div className="val">{recOf(dogs)}</div>
+            <div className="sub">picking teams getting points</div>
+          </div>
+          <div className="stat">
+            <div className="lab">As favourite</div>
+            <div className="val">{recOf(favs)}</div>
+            <div className="sub">picking teams laying points</div>
+          </div>
+          <div className="stat">
+            <div className="lab">Most picked</div>
+            <div className="val">{favTeam ? favTeam[0] : '—'}</div>
+            <div className="sub">{favTeam ? `${favTeam[1]}×` : 'no picks yet'}</div>
+          </div>
+          <div className="stat">
+            <div className="lab">Missed weeks</div>
+            <div className="val">{noPicks}</div>
+            <div className="sub">no pick submitted</div>
+          </div>
+        </div>
+
+        <div className="section-title">Every pick</div>
+        <div className="panel">
+          {weeks.length === 0 && (
+            <div className="row"><span className="mut">Nothing until the first week locks.</span></div>
+          )}
+          {weeks.map((w: any) => (
+            <div className="row" key={w.week_id}>
+              <span className="rank" style={{ fontSize: 11 }}>{w.round === 'REG' ? w.week_number : w.round}</span>
+              <span className="pickcell">
+                <Logo abbr={w.picked_team} size={22} />
+                {w.picked_team ?? <span className="mut">no pick</span>}
+                {w.picked_team && (
+                  <span className={spreadClass(spreadOf(w))}>{fmtSpread(spreadOf(w))}</span>
+                )}
+              </span>
+              <span className="score">
+                {w.home_score != null
+                  ? `${w.away_abbr} ${w.away_score}–${w.home_score} ${w.home_abbr}${w.game_status === 'FINAL' ? ' F' : ''}`
+                  : ''}
+              </span>
+              <span className={`pts ${w.outcome === 'W' ? 'pos' : w.outcome ? 'neg' : 'mut'}`}>
+                {!w.picked_team ? '0' : w.outcome ? `${w.total_points}` : 'pending'}
+              </span>
+              {w.pick_id && (
+                <button className="info-btn" onClick={() => onDetail(w.pick_id)} aria-label="Details">ⓘ</button>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+      {detailNode}
+    </main>
+  );
+}
+
 export default function Play() {
   const [token, setToken] = useState<string | null>(null);
   const [name, setName] = useState<string | null>(null);
@@ -175,6 +296,7 @@ export default function Play() {
   const [week, setWeek] = useState<any>(null);
   const [standings, setStandings] = useState<any>(null);
   const [msg, setMsg] = useState<{ text: string; kind: 'ok' | 'err' } | null>(null);
+  const [profileId, setProfileId] = useState<string | null>(null);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [detail, setDetail] = useState<any>(null);
 
@@ -285,6 +407,18 @@ export default function Play() {
     </>
   ) : undefined;
 
+  if (profileId && standings) {
+    return (
+      <PlayerProfile
+        playerId={profileId}
+        standings={standings}
+        onBack={() => setProfileId(null)}
+        onDetail={(id: string) => setDetailId(id)}
+        detailNode={detailId ? <DetailSheet detail={detail} onClose={() => setDetailId(null)} /> : null}
+      />
+    );
+  }
+
   return (
     <main>
       <Hero sub={heroSub} />
@@ -374,7 +508,7 @@ export default function Play() {
             <div className="section-title">Standings · {standings.season}</div>
             <div className="panel">
               {standings.standings.map((s: any, i: number) => (
-                <div className="row" key={s.player_id}>
+                <div className="row tappable" key={s.player_id} onClick={() => setProfileId(s.player_id)}>
                   <span className="rank">{['🥇', '🥈', '🥉'][i] ?? i + 1}</span>
                   <span className="name">{s.display_name}</span>
                   <span className="wl">{s.wins}–{s.losses}</span>
