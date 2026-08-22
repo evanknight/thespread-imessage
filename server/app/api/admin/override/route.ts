@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   let body: any;
   try { body = await req.json(); } catch { return err(400, 'invalid JSON'); }
   const note = String(body?.note ?? '').trim();
-  if (!note) return err(400, 'note is required — say why you are overriding');
+  if (!note) return err(400, 'note is required: say why you are overriding');
   const nowIso = requestNow(req);
 
   if (body.kind === 'game') {

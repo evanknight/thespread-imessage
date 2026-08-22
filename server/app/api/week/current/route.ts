@@ -13,7 +13,7 @@ export async function GET(req: Request) {
 
   const nowIso = requestNow(req);
   const weekId = await currentWeekId(db);
-  if (!weekId) return err(404, 'no weeks synced yet — run sync-schedule');
+  if (!weekId) return err(404, 'no weeks synced yet, run sync-schedule');
 
   const wk = await weekWithLockState(db, weekId, nowIso);
   if (wk && !wk.locked) await maybeRefreshOdds(db, weekId, nowIso);

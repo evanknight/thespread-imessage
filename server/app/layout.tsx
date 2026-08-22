@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'sw
 
 export const metadata = {
   title: 'The Spread',
-  description: 'Private NFL pick’em — pick a winner, win the spread.',
+  description: 'Private NFL pick’em. Pick a winner, win the spread.',
 };
 
 export const viewport: Viewport = {
@@ -227,6 +227,9 @@ img { vertical-align: middle; }
 .tile.selected .pos, .tile.selected .neg, .tile.selected .mut { color: var(--bg); }
 .tile.selected .payout { color: var(--bg); opacity: 0.8; }
 .tile.selected .tile-nick { color: var(--bg); opacity: 0.75; }
+.tile-x { margin-left: 6px; font-size: 11px; opacity: 0; transition: opacity 0.12s ease; }
+.tile.selected .tile-x { opacity: 0.55; }
+@media (hover: hover) { .tile.selected:hover .tile-x { opacity: 1; } }
 
 /* ------- fixed pick bar ------- */
 .pickbar {

@@ -72,7 +72,7 @@ struct WhosInStrip: View {
                     .background(Capsule().fill(Color(.systemGray6)))
                 }
             }
-            Text("Everyone's picks are revealed here at lock — nobody can see yours before then.")
+            Text("Everyone's picks are revealed here at lock. Nobody can see yours before then.")
                 .font(.caption2).foregroundStyle(.secondary)
         }
         .padding(.horizontal, 14)

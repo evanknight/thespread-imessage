@@ -52,7 +52,7 @@ enum BubbleRenderer {
             }
 
             let status = locked
-                ? "🔒 Locked — open to see the board"
+                ? "🔒 Locked. Open to see the board"
                 : "\(submitted) of \(total) in · \(SpreadFormat.lockLine(lockAt))"
             status.draw(at: CGPoint(x: 16, y: 110), withAttributes: [
                 .font: UIFont.systemFont(ofSize: 13, weight: .semibold),

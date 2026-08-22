@@ -266,7 +266,7 @@ struct SetupCard: View {
                     step("1", "Open any iMessage conversation.")
                     step("2", "Tap the ⊕ button next to the text field.")
                     step("3", "Scroll down and tap “More”.")
-                    step("4", "Find The Spread and tap it — pin it for quick access.")
+                    step("4", "Find The Spread and tap it, then pin it for quick access.")
                     step("5", "Make your pick, then hit send so the group sees you're in.")
                     Text("TestFlight builds expire after 90 days. If the app stops opening mid-season, reinstall from the TestFlight link.")
                         .font(.caption2).foregroundStyle(.secondary).padding(.top, 4)
@@ -299,7 +299,7 @@ struct AccountCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Account").font(.subheadline.weight(.semibold))
-            Text("New phone or a broken drawer? Enter your enrollment code again — it adds this device without signing out anywhere else.")
+            Text("New phone or a broken drawer? Enter your enrollment code again. It adds this device without signing out anywhere else.")
                 .font(.caption2).foregroundStyle(.secondary)
             HStack {
                 TextField("Enrollment code", text: $code)

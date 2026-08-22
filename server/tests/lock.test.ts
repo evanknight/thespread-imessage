@@ -74,3 +74,60 @@ describe('pick lock (Rule A)', () => {
     }
   });
 });
+
+describe('removing a pick', () => {
+  let ctx: TestCtx;
+  beforeEach(async () => { ctx = await freshDb(); });
+
+  const remove = async (name: string, now: string) => {
+    const { DELETE } = await import('@/app/api/pick/route');
+    const { apiReq, token } = await import('./helpers');
+    return DELETE(apiReq('/api/pick', {
+      method: 'DELETE', token: token(name), now, body: { week_id: ctx.weekId },
+    }));
+  };
+
+  it('removes the pick before lock, leaving no row at all', async () => {
+    await submitPick(ctx, 'Alice', 'sun1', 'BUF', T.tuesday);
+    const res = await remove('Alice', T.beforeLock);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.removed).toBe(true);
+    expect(body.submitted_count).toBe(0);
+
+    const rows = await ctx.db.query('select * from picks where player_id = $1', [ctx.players['Alice']]);
+    expect(rows).toHaveLength(0);
+  });
+
+  it('refuses to remove after lock with 409', async () => {
+    await submitPick(ctx, 'Alice', 'sun1', 'BUF', T.tuesday);
+    const res = await remove('Alice', T.afterLock);
+    expect(res.status).toBe(409);
+    const rows = await ctx.db.query('select * from picks where player_id = $1', [ctx.players['Alice']]);
+    expect(rows).toHaveLength(1);      // pick survives
+  });
+
+  it('a removed pick scores 0 and leaves the W-L record untouched', async () => {
+    const { snapshot, finalize, runScoring, standingsFor } = await import('./helpers');
+    await submitPick(ctx, 'Alice', 'sun1', 'BUF', T.tuesday);
+    await remove('Alice', T.beforeLock);
+    await snapshot(ctx, 'sun1', '2026-10-11T16:55:00Z', -2.5, 2.5);
+    await finalize(ctx, 'sun1', 27, 20, T.monday);
+    await runScoring(T.monday);
+    expect(await standingsFor(ctx, 'Alice')).toEqual({ total: 0, wins: 0, losses: 0, picks: 0 });
+  });
+
+  it('removing when there is nothing to remove is a 404, not a crash', async () => {
+    const res = await remove('Bob', T.beforeLock);
+    expect(res.status).toBe(404);
+  });
+
+  it('you can pick again after removing', async () => {
+    await submitPick(ctx, 'Alice', 'sun1', 'BUF', T.tuesday);
+    await remove('Alice', T.tuesday);
+    const again = await submitPick(ctx, 'Alice', 'sun2', 'PHI', T.beforeLock);
+    expect(again.status).toBe(200);
+    const rows = await ctx.db.query('select team_id from picks where player_id = $1', [ctx.players['Alice']]);
+    expect(rows[0].team_id).toBe(ctx.teams['PHI']);
+  });
+});

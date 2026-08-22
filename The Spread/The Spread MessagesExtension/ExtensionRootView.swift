@@ -187,9 +187,11 @@ struct ExpandedView: View {
                     scoresList(week)
                 } else {
                     WhosInStrip(week: week)
-                    GameListView(week: week) { game, team in
+                    GameListView(week: week, onPick: { game, team in
                         Task { await model.submitPick(game: game, team: team) }
-                    }
+                    }, onRemove: {
+                        Task { await model.removePick() }
+                    })
                 }
             }
             .padding(.top, 4)
@@ -197,7 +199,7 @@ struct ExpandedView: View {
         } else if model.isLoading {
             ProgressView().padding(40)
         } else {
-            Text("Nothing here yet — season hasn't been synced.")
+            Text("Nothing here yet. The season hasn't been synced.")
                 .font(.caption).foregroundStyle(.secondary).padding(30)
         }
     }
@@ -301,7 +303,7 @@ struct ProfileView: View {
                     .task { await model.loadHistory(); await model.loadStandings() }
             }
 
-            Text("New phone or broken drawer? Enter your enrollment code again in the host app — same code, same identity.")
+            Text("New phone or broken drawer? Enter your enrollment code again in the host app. Same code, same identity.")
                 .font(.caption2).foregroundStyle(.secondary)
                 .padding(14)
         }

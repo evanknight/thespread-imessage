@@ -86,7 +86,7 @@ struct PickHero: View {
                 }
                 .padding(.top, 2)
             } else if !week.week.locked {
-                Text("\(week.submittedCount) of \(week.playerCount) in · pick a team — they only have to WIN")
+                Text("\(week.submittedCount) of \(week.playerCount) in · pick a team, they only have to WIN")
                     .font(.caption).foregroundStyle(.white.opacity(0.85))
             } else {
                 Text("\(week.submittedCount) of \(week.playerCount) picked · the board is live")
@@ -207,7 +207,7 @@ struct WeekBoardView: View {
         case "W": return "W · \(SpreadFormat.points(pts)) pts"
         case "L": return "L · 0"
         case "NP": return "no game"
-        case "VOID": return "VOID — needs manual spread"
+        case "VOID": return "VOID, needs manual spread"
         default: return outcome
         }
     }
@@ -216,6 +216,8 @@ struct WeekBoardView: View {
 struct GameListView: View {
     let week: WeekResponse
     let onPick: (Game, TeamSide) -> Void
+    /// Tapping the team you already picked clears the week instead of re-picking it.
+    var onRemove: (() -> Void)? = nil
 
     var body: some View {
         VStack(spacing: 0) {
@@ -251,12 +253,21 @@ struct GameListView: View {
         // reserved for the one true CTA: Send to chat.
         let ink = Color.primary
         let paper = Color(.systemBackground)
-        return Button { onPick(game, team) } label: {
+        return Button {
+            if mine, let onRemove { onRemove() } else { onPick(game, team) }
+        } label: {
             VStack(spacing: 3) {
                 HStack(spacing: 7) {
                     TeamLogo(abbr: team.abbr, size: 34)
                     VStack(alignment: .leading, spacing: 0) {
-                        Text(team.abbr).font(.headline)
+                        HStack(spacing: 4) {
+                            Text(team.abbr).font(.headline)
+                            if mine {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(paper.opacity(0.65))
+                            }
+                        }
                         Text(SpreadFormat.nickname(team.name))
                             .font(.system(size: 9, weight: .semibold))
                             .foregroundStyle(mine ? paper.opacity(0.7) : Color.secondary)

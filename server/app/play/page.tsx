@@ -123,8 +123,8 @@ function DetailSheet({ detail: d, onClose }: { detail: any; onClose: () => void 
         {delta != null && delta !== 0 && (
           <div className="sheet-note" style={{ color: delta > 0 ? 'var(--green)' : 'var(--red)' }}>
             {delta > 0
-              ? `Moved +${delta} in your favour after lock — ${Math.abs(delta)} extra points.`
-              : `Moved ${delta} against you after lock — cost you ${Math.abs(delta)} points.`}
+              ? `Moved +${delta} in your favour after lock, worth ${Math.abs(delta)} extra points.`
+              : `Moved ${delta} against you after lock, costing you ${Math.abs(delta)} points.`}
           </div>
         )}
         {delta === 0 && <div className="sheet-note" style={{ color: 'var(--muted)' }}>The line never moved after lock.</div>}
@@ -160,7 +160,7 @@ function DetailSheet({ detail: d, onClose }: { detail: any; onClose: () => void 
             </div>
             {d.result.outcome === 'L' && (
               <div className="sheet-note" style={{ color: 'var(--faint)', fontSize: 11 }}>
-                A loss or tie always scores 0 — the spread only pays on an outright win.
+                A loss or tie always scores 0. The spread only pays on an outright win.
               </div>
             )}
             {d.result.note && <div className="sheet-note" style={{ color: 'var(--red)', fontSize: 11 }}>{d.result.note}</div>}
@@ -208,7 +208,7 @@ function AccountSheet({ name, onClose, onProfile, onSignOut }: any) {
             Sign out
           </button>
           <p style={{ fontSize: 11, color: 'var(--faint)', marginTop: 12 }}>
-            Signing out here doesn't affect the iMessage app — your enrollment code works on
+            Signing out here doesn't affect the iMessage app. Your enrollment code works on
             every device at once.
           </p>
         </div>
@@ -391,6 +391,20 @@ export default function Play() {
     setName(body.display_name);
   }
 
+  async function removePick() {
+    if (!token || !week) return;
+    setMsg(null);
+    const res = await fetch('/api/pick', {
+      method: 'DELETE',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify({ week_id: week.week.id }),
+    });
+    if (res.status === 409) { setMsg({ text: 'Too late, picks locked at first kickoff.', kind: 'err' }); return; }
+    if (!res.ok) { setMsg({ text: 'Could not clear the pick.', kind: 'err' }); return; }
+    setMsg({ text: "Pick cleared. You're not in this week yet.", kind: 'ok' });
+    await load(token);
+  }
+
   async function pick(game: any, team: any) {
     if (!token || !week) return;
     setMsg(null);
@@ -400,7 +414,7 @@ export default function Play() {
       body: JSON.stringify({ week_id: week.week.id, game_id: game.id, team_id: team.team_id }),
     });
     const body = await res.json();
-    if (res.status === 409) { setMsg({ text: 'Too late — picks locked at first kickoff.', kind: 'err' }); return; }
+    if (res.status === 409) { setMsg({ text: 'Too late, picks locked at first kickoff.', kind: 'err' }); return; }
     if (!res.ok) { setMsg({ text: body.error ?? 'pick failed', kind: 'err' }); return; }
     const payout = 10 + (team.spread ?? 0) + (week.week.playoff_bonus ?? 0);
     setMsg({ text: `${team.abbr} locked in for ${fmtPts(payout)} pts if they win ✓`, kind: 'ok' });
@@ -514,7 +528,7 @@ export default function Play() {
         ) : (
           <>
             <div className="section-title">
-              {week.my_pick ? 'Tap another team to change your pick' : 'Tap a team — win = 10 + spread'}
+              {week.my_pick ? 'Tap another team to change your pick' : 'Tap a team. Win = 10 + spread'}
             </div>
             <div className="freshness">
               ↻ DraftKings lines updated {ago(week.lines_updated_at)}
@@ -530,12 +544,18 @@ export default function Play() {
                         <button
                           key={t.team_id}
                           className={`tile${week.my_pick?.team_id === t.team_id ? ' selected' : ''}`}
-                          onClick={() => pick(g, t)}
+                          onClick={() => (week.my_pick?.team_id === t.team_id ? removePick() : pick(g, t))}
+                          title={week.my_pick?.team_id === t.team_id ? 'Click to clear your pick' : undefined}
                         >
                           <Logo abbr={t.abbr} size={36} />
                           <span className="tile-info">
-                            <span className="tile-abbr">{t.abbr}</span>
-                            <span className="tile-nick">{nickname(t.name)}</span>
+                            <span className="tile-abbr">
+                              {t.abbr}
+                              {week.my_pick?.team_id === t.team_id && <span className="tile-x">✕</span>}
+                            </span>
+                            <span className="tile-nick">
+                              {week.my_pick?.team_id === t.team_id ? 'CLICK TO CLEAR' : nickname(t.name)}
+                            </span>
                             <span className="tile-line">
                               <span className={spreadClass(t.spread)}>{fmtSpread(t.spread)}</span>
                               {t.spread != null && (

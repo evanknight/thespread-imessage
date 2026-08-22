@@ -85,6 +85,12 @@ struct PickResponse: Codable {
     let playerCount: Int
 }
 
+struct RemoveResponse: Codable {
+    let removed: Bool
+    let submittedCount: Int
+    let playerCount: Int
+}
+
 struct EnrollResponse: Codable {
     let playerId: String
     let displayName: String

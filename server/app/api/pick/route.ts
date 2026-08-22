@@ -76,3 +76,56 @@ export async function POST(req: Request) {
     player_count: meta[0].player_count,
   });
 }
+
+// Remove this week's pick entirely. Same lock rule as POST: the delete only
+// matches while effective-now is before lock_at, so it cannot fire afterwards.
+//
+// A removed pick is simply an absent row, which is exactly how "no pick" is
+// modelled everywhere else: 0 points for the week, W/L record untouched.
+export async function DELETE(req: Request) {
+  const db = getDb();
+  const player = await authPlayer(req, db);
+  if (!player) return err(401, 'unauthorized');
+
+  let body: any = {};
+  try { body = await req.json(); } catch { /* week_id may come from the query */ }
+  const weekId = body?.week_id ?? new URL(req.url).searchParams.get('week_id');
+  if (!weekId) return err(400, 'week_id required');
+
+  const nowIso = requestNow(req);
+  const rows = await db.query<{ id: string }>(
+    `delete from picks pk
+     using weeks w
+     where pk.week_id = $1 and pk.player_id = $2
+       and w.id = pk.week_id
+       and w.lock_at is not null and coalesce($3::timestamptz, now()) < w.lock_at
+     returning pk.id`,
+    [weekId, player.id, nowIso]
+  );
+
+  if (!rows[0]) {
+    const wk = await db.query<any>(
+      `select (lock_at is not null and coalesce($2::timestamptz, now()) >= lock_at) as locked
+       from weeks where id = $1`,
+      [weekId, nowIso]
+    );
+    if (!wk[0]) return err(404, 'unknown week');
+    if (wk[0].locked) return err(409, 'picks are locked for this week');
+    return err(404, 'no pick to remove');
+  }
+
+  const meta = await db.query<any>(
+    `select w.week_number, w.lock_at,
+            (select count(*) from picks pk where pk.week_id = w.id)::int as submitted_count,
+            (select count(*) from players)::int as player_count
+     from weeks w where w.id = $1`,
+    [weekId]
+  );
+  return json({
+    removed: true,
+    week_number: meta[0].week_number,
+    lock_at: meta[0].lock_at,
+    submitted_count: meta[0].submitted_count,
+    player_count: meta[0].player_count,
+  });
+}

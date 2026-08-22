@@ -7,7 +7,7 @@ enum SpreadAPIError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .notEnrolled: return "Not enrolled yet — enter your enrollment code."
+        case .notEnrolled: return "Not enrolled yet. Enter your enrollment code."
         case .locked: return "Picks are locked for this week."
         case .server(let code, let msg): return "Server error \(code): \(msg)"
         }
@@ -45,6 +45,10 @@ struct SpreadAPI {
 
     func pickDetail(id: String) async throws -> PickDetailResponse {
         try await request("GET", "/api/pick/\(id)")
+    }
+
+    func removePick(weekId: String) async throws {
+        let _: RemoveResponse = try await request("DELETE", "/api/pick", body: ["week_id": weekId])
     }
 
     func standings() async throws -> StandingsResponse {

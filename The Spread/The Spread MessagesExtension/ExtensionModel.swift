@@ -87,10 +87,24 @@ final class ExtensionModel: ObservableObject {
             stageBubble(weekId: wk.id, pickId: resp.pick.id, weekNumber: resp.weekNumber,
                         submitted: resp.submittedCount, total: resp.playerCount, lockAt: resp.lockAt)
             let potential = (team.spread ?? 0) + 10 + (wk.playoffBonus ?? 0)
-            showBanner("\(team.abbr) locked in for \(SpreadFormat.points(potential)) pts if they win — tap send ➤")
+            showBanner("\(team.abbr) locked in for \(SpreadFormat.points(potential)) pts if they win. Tap send ➤")
             await refresh()
         } catch SpreadAPIError.locked {
-            showBanner("Too late — picks locked at first kickoff.", isError: true)
+            showBanner("Too late, picks locked at first kickoff.", isError: true)
+            await refresh()
+        } catch {
+            showBanner(error.localizedDescription, isError: true)
+        }
+    }
+
+    func removePick() async {
+        guard let wk = week?.week else { return }
+        do {
+            try await SpreadAPI.shared.removePick(weekId: wk.id)
+            showBanner("Pick cleared. You're not in this week yet.")
+            await refresh()
+        } catch SpreadAPIError.locked {
+            showBanner("Too late, picks locked at first kickoff.", isError: true)
             await refresh()
         } catch {
             showBanner(error.localizedDescription, isError: true)
@@ -121,7 +135,7 @@ final class ExtensionModel: ObservableObject {
         guard let week, let pick = week.myPick, let pickId = pick.pickId else { return }
         stageBubble(weekId: week.week.id, pickId: pickId, weekNumber: week.week.weekNumber,
                     submitted: week.submittedCount, total: week.playerCount, lockAt: week.week.lockAt)
-        showBanner("Staged — hit the blue ➤ to send")
+        showBanner("Staged. Hit the blue ➤ to send")
         controller?.requestPresentationStyle(.compact)
     }
 
@@ -150,11 +164,11 @@ final class ExtensionModel: ObservableObject {
             weekNumber: weekNumber, submitted: submitted, total: total,
             lockAt: lockAt, senderName: senderName
         )
-        layout.caption = senderName.map { "🏈 \($0) is in — Week \(weekNumber)" }
-            ?? "🏈 The Spread — Week \(weekNumber)"
+        layout.caption = senderName.map { "🏈 \($0) is in · Week \(weekNumber)" }
+            ?? "🏈 The Spread · Week \(weekNumber)"
         layout.subcaption = bubbleSubcaption(submitted: submitted, total: total, lockAt: lockAt)
         message.layout = layout
-        message.summaryText = "The Spread — Week \(weekNumber)"
+        message.summaryText = "The Spread · Week \(weekNumber)"
 
         // Extensions cannot send. This stages the bubble in the input field;
         // the player taps send. Two taps, by design — never promise otherwise.
@@ -167,7 +181,7 @@ final class ExtensionModel: ObservableObject {
 
     private func bubbleSubcaption(submitted: Int, total: Int, lockAt: Date?) -> String {
         if let lockAt, lockAt <= Date() {
-            return "Picks are locked — open to see the board"
+            return "Picks are locked. Open to see the board"
         }
         return "\(submitted) of \(total) in · \(SpreadFormat.lockLine(lockAt))"
     }

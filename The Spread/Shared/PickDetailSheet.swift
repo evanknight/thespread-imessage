@@ -138,8 +138,8 @@ struct PickDetailSheet: View {
                 Image(systemName: delta > 0 ? "arrow.up.right" : "arrow.down.right")
                     .font(.caption.weight(.bold))
                 Text(delta > 0
-                     ? "Moved +\(SpreadFormat.points(delta)) in your favour after lock — \(SpreadFormat.points(abs(delta))) extra points"
-                     : "Moved \(SpreadFormat.points(delta)) against you after lock — cost you \(SpreadFormat.points(abs(delta))) points")
+                     ? "Moved +\(SpreadFormat.points(delta)) in your favour after lock, worth \(SpreadFormat.points(abs(delta))) extra points"
+                     : "Moved \(SpreadFormat.points(delta)) against you after lock, costing you \(SpreadFormat.points(abs(delta))) points")
                     .font(.caption)
             }
             .foregroundStyle(delta > 0 ? .green : .red)
@@ -237,7 +237,7 @@ struct PickDetailSheet: View {
                 }
                 .padding(.horizontal, 16).padding(.vertical, 6)
                 if result.outcome == "L" {
-                    Text("A loss or tie always scores 0 — the spread only pays on an outright win.")
+                    Text("A loss or tie always scores 0. The spread only pays on an outright win.")
                         .font(.caption2).foregroundStyle(.secondary)
                         .padding(.horizontal, 16)
                 }
@@ -256,7 +256,7 @@ struct PickDetailSheet: View {
                     Text("0").font(.title3.weight(.black).monospacedDigit()).foregroundStyle(.secondary)
                 }
                 if !d.week.locked {
-                    Text("Not final until this game kicks off — the official number is DraftKings' line right before kickoff.")
+                    Text("Not final until this game kicks off. The official number is DraftKings' line right before kickoff.")
                         .font(.caption2).foregroundStyle(.secondary).padding(.top, 2)
                 }
             }
