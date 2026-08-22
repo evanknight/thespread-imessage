@@ -1,6 +1,7 @@
 import { getDb } from '@/lib/db';
 import { buildWeekPayload, currentWeekId } from '@/lib/weeks';
 import { num } from '@/lib/http';
+import BoardCta from './BoardCta';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +36,7 @@ export default async function Board() {
               <div className="hero-title">🏈 The Spread</div>
               <div className="hero-sub-placeholder" />
             </div>
-            <a className="cta-gold" href="/play">Log in &amp; pick</a>
+            <BoardCta />
           </div>
           <div className="hero-sub">
             {season[0] && <span className="gold">Season {season[0].year}</span>}
