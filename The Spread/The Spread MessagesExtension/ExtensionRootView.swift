@@ -17,48 +17,9 @@ struct ExtensionRootView: View {
 
 // MARK: - Compact (keyboard height, renders from cache)
 
-/// Right-hand region of the diagonal split (the opponent's side).
-struct DiagonalSide: Shape {
-    /// Where the split sits horizontally, 0...1.
-    var ratio: CGFloat = 0.60
-    /// How far the top edge leans past the bottom edge.
-    var skew: CGFloat = 0.16
-
-    func path(in rect: CGRect) -> Path {
-        var p = Path()
-        let topX = rect.width * (ratio + skew / 2)
-        let bottomX = rect.width * (ratio - skew / 2)
-        p.move(to: CGPoint(x: topX, y: 0))
-        p.addLine(to: CGPoint(x: rect.width, y: 0))
-        p.addLine(to: CGPoint(x: rect.width, y: rect.height))
-        p.addLine(to: CGPoint(x: bottomX, y: rect.height))
-        p.closeSubpath()
-        return p
-    }
-}
-
-/// The white slash between the two sides.
-struct DiagonalStripe: Shape {
-    var ratio: CGFloat = 0.60
-    var skew: CGFloat = 0.16
-    var thickness: CGFloat = 6
-
-    func path(in rect: CGRect) -> Path {
-        var p = Path()
-        let topX = rect.width * (ratio + skew / 2)
-        let bottomX = rect.width * (ratio - skew / 2)
-        p.move(to: CGPoint(x: topX, y: 0))
-        p.addLine(to: CGPoint(x: topX + thickness, y: 0))
-        p.addLine(to: CGPoint(x: bottomX + thickness, y: rect.height))
-        p.addLine(to: CGPoint(x: bottomX, y: rect.height))
-        p.closeSubpath()
-        return p
-    }
-}
-
-/// Compact (keyboard height). A matchup card split on the diagonal: your team
-/// takes the larger side with the full detail, the opponent gets the smaller
-/// side with just identity, so which one you picked is unmistakable at a glance.
+/// Compact (keyboard height). One centred block: the matchup on a single line
+/// with your team enlarged, and the payout plus YOUR PICK hanging underneath on
+/// your team's side, so ownership is obvious without any background trickery.
 struct CompactView: View {
     @ObservedObject var model: ExtensionModel
 
@@ -66,30 +27,33 @@ struct CompactView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            card
+            Spacer(minLength: 0)
+            content
+            Spacer(minLength: 0)
             button
+                .padding(.horizontal, 20)
+                .padding(.bottom, 14)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(FieldBackground().ignoresSafeArea())
     }
 
-    // MARK: card
-
     @ViewBuilder
-    private var card: some View {
+    private var content: some View {
         if model.identity == nil {
-            centered {
+            VStack(spacing: 6) {
                 Text("🏈 THE SPREAD")
                     .font(.system(size: 24, weight: .black)).foregroundStyle(gold)
                 Text("Pick a team. They only have to win.")
                     .font(.caption).foregroundStyle(.white.opacity(0.85))
             }
         } else if let week = model.week {
-            if let matchup = myMatchup(week) {
-                matchupCard(week, matchup.mine, matchup.opponent)
+            if let m = myMatchup(week) {
+                matchupBlock(week, m.mine, m.opponent)
             } else {
-                centered {
+                VStack(spacing: 6) {
                     Text(weekLabel(week))
-                        .font(.system(size: 30, weight: .black)).foregroundStyle(gold)
+                        .font(.system(size: 28, weight: .black)).foregroundStyle(gold)
                     Label(week.week.locked ? "You sat this week out" : "No pick yet",
                           systemImage: week.week.locked ? "moon.zzz.fill" : "exclamationmark.circle.fill")
                         .font(.subheadline.weight(.semibold))
@@ -99,94 +63,63 @@ struct CompactView: View {
                 }
             }
         } else {
-            centered {
-                Text("🏈 THE SPREAD")
-                    .font(.system(size: 24, weight: .black)).foregroundStyle(gold)
-            }
+            Text("🏈 THE SPREAD")
+                .font(.system(size: 24, weight: .black)).foregroundStyle(gold)
         }
     }
 
-    private func matchupCard(_ week: WeekResponse, _ mine: TeamSide, _ opponent: TeamSide) -> some View {
-        ZStack {
-            // Opponent's side, dimmed back so it recedes.
-            DiagonalSide().fill(Color.black.opacity(0.34))
-            DiagonalStripe().fill(Color.white.opacity(0.9))
-            DiagonalStripe(thickness: 2)
-                .offset(x: 12)
-                .fill(Color.white.opacity(0.35))
+    /// Left-aligned internals inside a block that is itself centred, so the
+    /// payout and seal line up under your team rather than under the matchup.
+    private func matchupBlock(_ week: WeekResponse, _ mine: TeamSide, _ opponent: TeamSide) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Text(weekLabel(week))
+                .font(.system(size: 13, weight: .black)).foregroundStyle(gold)
 
-            VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    Text(weekLabel(week))
-                        .font(.system(size: 15, weight: .black)).foregroundStyle(gold)
-                    Spacer()
-                }
-                .padding(.horizontal, 16).padding(.top, 10)
-
-                HStack(alignment: .center, spacing: 0) {
-                    // Your team: the whole story.
-                    VStack(alignment: .leading, spacing: 3) {
-                        HStack(spacing: 8) {
-                            TeamLogo(abbr: mine.abbr, size: 42)
-                            Text(mine.abbr)
-                                .font(.system(size: 34, weight: .black))
-                                .foregroundStyle(.white)
-                        }
-                        HStack(spacing: 6) {
-                            Text(SpreadFormat.spread(mine.spread))
-                                .font(.subheadline.weight(.bold))
-                                .foregroundStyle(mine.spread ?? 0 > 0 ? Color.green : Color.white)
-                            if let sp = mine.spread {
-                                Text("→ \(SpreadFormat.points(10 + sp + (week.week.playoffBonus ?? 0))) pts")
-                                    .font(.subheadline.weight(.semibold))
-                                    .foregroundStyle(.white)
-                            }
-                        }
-                        Label(week.week.locked ? "LOCKED IN" : "YOUR PICK", systemImage: "checkmark.seal.fill")
-                            .font(.system(size: 10, weight: .heavy))
-                            .foregroundStyle(gold)
-                    }
-                    .padding(.leading, 16)
-
-                    Spacer(minLength: 0)
-
-                    // Opponent: identity only.
-                    VStack(spacing: 3) {
-                        TeamLogo(abbr: opponent.abbr, size: 24)
-                        Text(opponent.abbr)
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundStyle(.white.opacity(0.75))
-                    }
-                    .padding(.trailing, 18)
-                }
-                .padding(.top, 4)
-
-                Spacer(minLength: 0)
-
-                Text(statusLine(week))
-                    .font(.system(size: 11))
-                    .foregroundStyle(.white.opacity(0.7))
-                    .padding(.horizontal, 16).padding(.bottom, 10)
+            HStack(alignment: .firstTextBaseline, spacing: 9) {
+                TeamLogo(abbr: mine.abbr, size: 34)
+                    .alignmentGuide(.firstTextBaseline) { $0[.bottom] - 6 }
+                Text(mine.abbr)
+                    .font(.system(size: 32, weight: .black))
+                    .foregroundStyle(.white)
+                Text("vs")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.55))
+                Text(opponent.abbr)
+                    .font(.system(size: 19, weight: .bold))
+                    .foregroundStyle(.white.opacity(0.8))
+                TeamLogo(abbr: opponent.abbr, size: 22)
+                    .alignmentGuide(.firstTextBaseline) { $0[.bottom] - 4 }
             }
+
+            HStack(spacing: 7) {
+                Text(SpreadFormat.spread(mine.spread))
+                    .font(.subheadline.weight(.bold))
+                    .foregroundStyle((mine.spread ?? 0) > 0 ? Color.green : Color.white)
+                if let sp = mine.spread {
+                    Text("→ \(SpreadFormat.points(10 + sp + (week.week.playoffBonus ?? 0))) pts")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white)
+                }
+            }
+
+            Label(week.week.locked ? "LOCKED IN" : "YOUR PICK", systemImage: "checkmark.seal.fill")
+                .font(.system(size: 10, weight: .heavy))
+                .foregroundStyle(gold)
+
+            Text(statusLine(week))
+                .font(.system(size: 11))
+                .foregroundStyle(.white.opacity(0.7))
+                .padding(.top, 1)
         }
-        .clipped()
     }
-
-    private func centered<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
-        VStack(spacing: 8) { content() }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(.horizontal, 18)
-    }
-
-    // MARK: button
 
     private var button: some View {
         Button { model.requestExpand() } label: {
             Text(buttonTitle)
                 .font(.subheadline.weight(.bold))
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 13)
-                .background(gold)
+                .padding(.vertical, 12)
+                .background(Capsule().fill(gold))
                 .foregroundStyle(.black)
         }
         .buttonStyle(.plain)
