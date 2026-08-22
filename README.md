@@ -78,11 +78,35 @@ capability once in Signing & Capabilities for each target).
 
 ## Distribution (TestFlight, forever)
 
-- External testing; first build goes through Beta App Review.
-- **Builds expire after 90 days.** Season runs Sep→Feb: upload in early September
-  and again around Thanksgiving. Put it in your calendar now.
-- Installing isn't the last step — each player must enable the app in the
-  Messages drawer (host app has the walkthrough).
+**Step 0 — you need the paid Apple Developer Program ($99/yr).** A free
+personal team can only side-load to your own device for 7 days at a time;
+TestFlight external testing requires the paid membership. Check at
+developer.apple.com/account — if it says "Personal Team", enroll first.
+
+1. **App Store Connect → create the app record.** appstoreconnect.apple.com →
+   Apps → + → New App. Platform iOS; Bundle ID `evanknight.The-Spread`
+   (Xcode's automatic signing registers it on first archive, so archive first
+   if it isn't in the dropdown); SKU anything (`thespread2026`); Name must be
+   globally unique even for TestFlight-only apps — if "The Spread" is taken,
+   use "The Spread Pick'em". Nobody outside the league ever sees this name.
+2. **Xcode → archive.** Set the run destination to **Any iOS Device (arm64)**
+   (you cannot archive against a simulator), then Product → Archive.
+3. **Organizer → Distribute App → TestFlight & App Store → Upload.** Let
+   automatic signing manage certificates. Processing takes ~5–15 minutes;
+   you get an email when the build is ready.
+4. **TestFlight tab → Test Information.** Fill in a feedback email and
+   "What to test" — both are required before external testing is allowed.
+5. **External Testing → new group** ("The League") → add the four friends by
+   email, or turn on the Public Link and text it to them.
+6. **Beta App Review.** The first build of a new app goes through review
+   (lighter than App Store review, usually under a day). Later builds of the
+   same app normally skip it.
+7. Testers install the **TestFlight** app, accept the invite, install The
+   Spread — then **enable it in the Messages drawer** (⊕ → More → The
+   Spread). The host app's Setup tab walks through this.
+
+**Builds expire after 90 days.** Season runs Sep→Feb: upload in early
+September and again around Thanksgiving. Put it in your calendar now.
 
 ## Ops notes
 
