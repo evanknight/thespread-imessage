@@ -171,6 +171,7 @@ img { vertical-align: middle; }
 .game-tiles { display: flex; align-items: stretch; gap: 8px; }
 .at { flex: none; align-self: center; font-size: 12px; font-weight: 700; color: var(--faint); }
 .tile {
+  position: relative;
   flex: 1 1 0; min-width: 0;
   display: flex; align-items: center; gap: 10px;
   padding: 10px 12px;
@@ -223,12 +224,17 @@ img { vertical-align: middle; }
 }
 .tile.selected .tile-nick { color: rgba(255, 255, 255, 0.75); }
 .tile-line { font-size: 12.5px; font-weight: 600; white-space: nowrap; }
-.payout { color: var(--muted); font-weight: 600; }
+.payout { color: var(--text); font-weight: 700; }
 .tile.selected .pos, .tile.selected .neg, .tile.selected .mut { color: var(--bg); }
 .tile.selected .payout { color: var(--bg); opacity: 0.8; }
 .tile.selected .tile-nick { color: var(--bg); opacity: 0.75; }
-.tile-x { margin-left: 6px; font-size: 11px; opacity: 0; transition: opacity 0.12s ease; }
-.tile.selected .tile-x { opacity: 0.55; }
+/* Sits in the tile's own top-right corner rather than inline with the name. */
+.tile-x {
+  position: absolute; top: 6px; right: 8px;
+  font-size: 12px; line-height: 1; font-weight: 700;
+  opacity: 0; transition: opacity 0.12s ease;
+}
+.tile.selected .tile-x { opacity: 0.5; }
 @media (hover: hover) { .tile.selected:hover .tile-x { opacity: 1; } }
 
 /* ------- fixed pick bar ------- */

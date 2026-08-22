@@ -547,12 +547,10 @@ export default function Play() {
                           onClick={() => (week.my_pick?.team_id === t.team_id ? removePick() : pick(g, t))}
                           title={week.my_pick?.team_id === t.team_id ? 'Click to clear your pick' : undefined}
                         >
+                          {week.my_pick?.team_id === t.team_id && <span className="tile-x">✕</span>}
                           <Logo abbr={t.abbr} size={36} />
                           <span className="tile-info">
-                            <span className="tile-abbr">
-                              {t.abbr}
-                              {week.my_pick?.team_id === t.team_id && <span className="tile-x">✕</span>}
-                            </span>
+                            <span className="tile-abbr">{t.abbr}</span>
                             <span className="tile-nick">
                               {week.my_pick?.team_id === t.team_id ? 'CLICK TO CLEAR' : nickname(t.name)}
                             </span>

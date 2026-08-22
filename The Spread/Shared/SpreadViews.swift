@@ -260,14 +260,7 @@ struct GameListView: View {
                 HStack(spacing: 7) {
                     TeamLogo(abbr: team.abbr, size: 34)
                     VStack(alignment: .leading, spacing: 0) {
-                        HStack(spacing: 4) {
-                            Text(team.abbr).font(.headline)
-                            if mine {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(paper.opacity(0.65))
-                            }
-                        }
+                        Text(team.abbr).font(.headline)
                         Text(SpreadFormat.nickname(team.name))
                             .font(.system(size: 9, weight: .semibold))
                             .foregroundStyle(mine ? paper.opacity(0.7) : Color.secondary)
@@ -288,6 +281,14 @@ struct GameListView: View {
             }
             .frame(maxWidth: .infinity, minHeight: 68)
             .background(RoundedRectangle(cornerRadius: 12).fill(mine ? ink : Color(.systemGray6)))
+            .overlay(alignment: .topTrailing) {
+                if mine {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 13))
+                        .foregroundStyle(paper.opacity(0.65))
+                        .padding(7)
+                }
+            }
             .foregroundStyle(mine ? paper : Color.primary)
         }
         .buttonStyle(.plain)
